@@ -1,0 +1,29 @@
+
+# Entornos virtuales de Python
+**/.venv/
+**/venv/
+
+# Archivos temporales
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Configuraciones privadas
+.env
+.env.*
+!.env.example
+
+# Datos y resultados de investigación
+datos_originales/
+red_vial/
+resultados/
+
+# Modelos y datos geoespaciales
+*.joblib
+*.graphml
+*.graphml.xml
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
