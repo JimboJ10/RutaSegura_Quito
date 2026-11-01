@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
-httpx
 osmnx==2.1.1
 networkx
 numpy
 shapely
+scikit-learn
