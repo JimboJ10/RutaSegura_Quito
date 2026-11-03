@@ -1,38 +1,88 @@
 """Geometrías, propiedades y metadatos de la respuesta de rutas."""
 
+import math
+
 from shapely import wkt
+from shapely.errors import GEOSException
 from shapely.geometry import LineString, MultiLineString
 
-from config import PERIODO
+from config import PERIODO, TOLERANCIA_COORDENADAS
+
+
+def _coinciden(a, b):
+    return all(
+        math.isclose(x, y, rel_tol=0, abs_tol=TOLERANCIA_COORDENADAS)
+        for x, y in zip(a, b)
+    )
+
+
+def partes_arista(G, u, v, datos):
+    """Orienta la geometría existente de u a v sin inventar tramos de unión."""
+    inicio = [float(G.nodes[u]["x"]), float(G.nodes[u]["y"])]
+    fin = [float(G.nodes[v]["x"]), float(G.nodes[v]["y"])]
+    geom = datos.get("geometry")
+    if isinstance(geom, str):
+        try:
+            geom = wkt.loads(geom)
+        except (GEOSException, ValueError) as exc:
+            raise ValueError("Geometría vial WKT inválida") from exc
+
+    if geom is None:
+        geom = LineString([inicio, fin])
+
+    if isinstance(geom, LineString):
+        geometria_partes = [geom]
+    elif isinstance(geom, MultiLineString):
+        geometria_partes = list(geom.geoms)
+    else:
+        raise ValueError("Geometría vial no compatible")
+    if geom.is_empty:
+        raise ValueError("Geometría vial vacía")
+
+    pendientes = []
+    for parte in geometria_partes:
+        coordenadas = [list(posicion) for posicion in parte.coords]
+        if len(coordenadas) < 2:
+            raise ValueError("Geometría vial sin suficientes coordenadas")
+        for posicion in coordenadas:
+            if len(posicion) != 2 or not all(math.isfinite(valor) for valor in posicion):
+                raise ValueError("Geometría vial: se requieren coordenadas 2D finitas")
+            lon, lat = posicion
+            if not (-180 <= lon <= 180 and -90 <= lat <= 90):
+                raise ValueError("Geometría vial fuera de EPSG:4326 (longitud, latitud)")
+        if not parte.is_valid or parte.length <= 0:
+            raise ValueError("Geometría vial inválida o de longitud cero")
+        pendientes.append(coordenadas)
+
+    lineas = []
+    actual = inicio
+    while pendientes:
+        for indice, coordenadas in enumerate(pendientes):
+            if _coinciden(coordenadas[0], actual):
+                orientadas = coordenadas
+                break
+            if _coinciden(coordenadas[-1], actual):
+                orientadas = coordenadas[::-1]
+                break
+        else:
+            raise ValueError(f"Geometría vial discontinua o no alineada con el nodo {u}")
+        pendientes.pop(indice)
+        lineas.append(orientadas)
+        actual = orientadas[-1]
+    if not _coinciden(actual, fin):
+        raise ValueError(f"Geometría vial no termina en el nodo {v}")
+    return lineas
 
 
 def geometria_camino(G, ruta):
     lineas = []
-
     for u, v, d in ruta["aristas"]:
-        geom = d.get("geometry")
-
-        if isinstance(geom, str):
-            geom = wkt.loads(geom)
-
-        if geom is None:
-            geom = LineString([
-                (float(G.nodes[u]["x"]), float(G.nodes[u]["y"])),
-                (float(G.nodes[v]["x"]), float(G.nodes[v]["y"]))
-            ])
-
-        if isinstance(geom, LineString):
-            geometria_partes = [geom]
-        elif isinstance(geom, MultiLineString):
-            geometria_partes = list(geom.geoms)
-        else:
-            raise ValueError("Geometría vial no compatible")
-
-        for parte in geometria_partes:
-            lineas.append([
-                [float(x), float(y)]
-                for x, y in parte.coords
-            ])
+        partes = partes_arista(G, u, v, d)
+        if lineas and not _coinciden(lineas[-1][-1], partes[0][0]):
+            raise ValueError("Ruta con segmentos discontinuos")
+        lineas.extend(partes)
+    if not lineas:
+        raise ValueError("Ruta sin aristas")
 
     return {
         "type": "MultiLineString",

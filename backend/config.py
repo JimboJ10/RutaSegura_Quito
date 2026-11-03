@@ -10,4 +10,7 @@ ALPHAS = [0.25, 0.5, 1, 2, 4, 8, 16]
 DESVIO_MAX = 0.15
 MAX_AJUSTE_M = 300
 PERIODO = "2026-06"
+CRS_ESPERADO = "EPSG:4326"
+# Tolerancia numérica en grados; no permite unir tramos separados en la calle.
+TOLERANCIA_COORDENADAS = 1e-9
 

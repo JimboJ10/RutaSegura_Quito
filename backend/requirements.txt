@@ -5,3 +5,4 @@ networkx
 numpy
 shapely
 scikit-learn
+pyproj

@@ -3,8 +3,9 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 
-from api import router
+from api import error_interno, error_validacion, router
 from grafo import cargar_grafo
 
 
@@ -20,6 +21,10 @@ app = FastAPI(
     title="RutaSegura Quito API",
     version="0.1.0",
     description="Comparador experimental de rutas peatonales",
-    lifespan=lifespan
+    lifespan=lifespan,
+    exception_handlers={
+        RequestValidationError: error_validacion,
+        Exception: error_interno,
+    },
 )
 app.include_router(router)
