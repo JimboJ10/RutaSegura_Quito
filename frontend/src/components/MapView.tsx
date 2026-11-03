@@ -1,40 +1,53 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { MapContainer, TileLayer, GeoJSON, Marker, Popup, CircleMarker, useMap, useMapEvents, ZoomControl } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, CircleMarker, Pane, useMap, useMapEvents, ZoomControl } from 'react-leaflet';
 import { Icon } from './Icon';
 import { format, ROUTE_META } from '../types';
 import type { ApiConfig, Endpoint, Point, Points, PredictionField, Predictions, RouteFeature, RouteId, Routes } from '../types';
 
 const icons = {
-  origen: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin origen">A</span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
-  destino: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin destino">B</span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
+  origen: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin origen"><span>A</span></span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
+  destino: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin destino"><span>B</span></span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
 };
-function MapBehavior({ target, onPoint, focus, config, route }: {
+function MapBehavior({ target, onPoint, focus, config, route, predictionsVisible }: {
   target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
-  focus: { kind: 'zone' | 'route'; serial: number }; config: ApiConfig; route?: RouteFeature;
+  focus: { kind: 'zone' | 'route'; serial: number }; config: ApiConfig; route?: RouteFeature; predictionsVisible: boolean;
 }) {
   const map = useMapEvents({ click(event) { if (target) onPoint(target, { lat: event.latlng.lat, lon: event.latlng.lng }); } });
+  const framing = useRef<{ bounds: L.LatLngBounds; route: boolean } | null>(null);
+  const reserve = useRef(90);
+  reserve.current = predictionsVisible ? 160 : 90;
+  const reframe = () => {
+    map.invalidateSize({ pan: false });
+    if (!framing.current) return;
+    map.fitBounds(framing.current.bounds, {
+      paddingTopLeft: [42, 110], paddingBottomRight: [66, reserve.current],
+      maxZoom: framing.current.route ? 17 : 15, animate: false,
+    });
+  };
   useEffect(() => {
-    const observer = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+    const observer = new ResizeObserver(reframe);
     observer.observe(map.getContainer());
     return () => observer.disconnect();
   }, [map]);
   useEffect(() => {
-    map.invalidateSize({ pan: false });
-    if (focus.kind === 'route' && route) map.fitBounds(L.geoJSON(route).getBounds(), { padding: [42, 48], maxZoom: 17, animate: false });
-    else {
+    if (focus.kind === 'route' && route) {
+      const bounds = L.geoJSON(route).getBounds();
+      framing.current = { bounds, route: true };
+    } else {
       const [west, south, east, north] = config.bbox;
-      map.fitBounds([[south, west], [north, east]], { padding: [28, 35], animate: false });
+      framing.current = { bounds: L.latLngBounds([south, west], [north, east]), route: false };
     }
+    reframe();
     // Cambiar de tarjeta solo actualiza el estilo; el encuadre es una acción explícita.
-  }, [focus, config, map]);
+  }, [focus, config, map, predictionsVisible]);
   return null;
 }
 function RouteLayer({ route, selected, selectable, onSelect }: { route: RouteFeature; selected: boolean; selectable: boolean; onSelect: (id: RouteId) => void }) {
   const layer = useRef<L.GeoJSON>(null);
   const meta = ROUTE_META[route.properties.id];
   useEffect(() => { if (selected) layer.current?.bringToFront(); }, [selected]);
-  return <GeoJSON ref={layer} data={route} style={{ color: meta.color, weight: selected ? 7 : 4, opacity: selected ? 1 : 0.45, dashArray: meta.dash }}
+  return <GeoJSON ref={layer} data={route} pane="route-lines" style={{ className: `route-line route-${route.properties.id}`, color: meta.color, weight: selected ? 7 : 4, opacity: selected ? 1 : 0.45, dashArray: meta.dash }}
     eventHandlers={{ click(event) { if (selectable) { L.DomEvent.stopPropagation(event.originalEvent); onSelect(route.properties.id); } } }} />;
 }
 function MapAccessibility() {
@@ -68,13 +81,17 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores'
         eventHandlers={{ tileerror: () => setTileError(true) }} />
       <ZoomControl position="bottomright" zoomInTitle="Acercar mapa" zoomOutTitle="Alejar mapa" />
-      <MapBehavior config={config} target={target} onPoint={onPoint} focus={focus} route={selectedRoute} />
-      {visible && predictions && <GeoJSON key={field} data={predictions} interactive={false} style={feature => {
+      <MapBehavior config={config} target={target} onPoint={onPoint} focus={focus} route={selectedRoute} predictionsVisible={visible} />
+      <Pane name="prediction-grid" style={{ zIndex: 350 }}>
+      {visible && predictions && <GeoJSON key={field} data={predictions} pane="prediction-grid" interactive={false} style={feature => {
         const value = feature?.properties[field] ?? range.min;
         const proportion = range.max > range.min ? (value - range.min) / (range.max - range.min) : 0.5;
         return { color: '#94500f', weight: 1, fillColor: '#cf7a27', fillOpacity: 0.12 + proportion * 0.5 };
       }} />}
+      </Pane>
+      <Pane name="route-lines" style={{ zIndex: 420 }}>
       {routes?.features.map(route => <RouteLayer key={route.properties.id + JSON.stringify(points)} route={route} selected={selected === route.properties.id} selectable={target === null} onSelect={onSelect} />)}
+      </Pane>
       {(['origen', 'destino'] as const).map(endpoint => points[endpoint] && <Marker key={endpoint} position={[points[endpoint].lat, points[endpoint].lon]} icon={icons[endpoint]} title={endpoint === 'origen' ? 'A · Origen solicitado' : 'B · Destino solicitado'}>
         <Popup>{endpoint === 'origen' ? 'Origen' : 'Destino'} solicitado<br />{points[endpoint].lat.toFixed(5)}, {points[endpoint].lon.toFixed(5)}</Popup>
       </Marker>)}

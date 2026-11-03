@@ -13,7 +13,7 @@ export default function App() {
   const demo = useDemo();
   const planner = useRoutePlanner();
   const [target, setTarget] = useState<Endpoint | null>('origen');
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() => window.innerWidth >= 768);
   const [selected, setSelected] = useState<RouteId>('corta');
   const [focus, setFocus] = useState<{ kind: 'zone' | 'route'; serial: number }>({ kind: 'zone', serial: 0 });
   const [offline, setOffline] = useState(!navigator.onLine);
@@ -52,12 +52,12 @@ export default function App() {
       {demo.loading ? <p role="status">Cargando la zona disponible y la red peatonal.</p> : <><p role="alert">{demo.error}</p><button className="primary" onClick={demo.retry}>Intentar nuevamente<Icon name="reset" /></button></>}
     </main> : <main className={`workspace ${expanded ? 'panel-expanded' : ''}`}>
       <aside id="journey-panel" className="journey-panel" aria-label="Planificación y resultados" tabIndex={-1}>
-        <button className="panel-toggle" aria-expanded={expanded} aria-controls="panel-content" onClick={() => setExpanded(v => !v)}>
+        <button className="panel-toggle" aria-label={expanded ? 'Contraer panel de rutas' : 'Expandir panel de rutas'} aria-expanded={expanded} aria-controls="panel-content" onClick={() => setExpanded(v => !v)}>
           <span className="drawer-handle" /><span><strong>{planner.routes ? 'Tus tres alternativas' : 'Planea tu recorrido'}</strong><small>{planner.routes ? 'Compara distancias e indicadores' : 'Selecciona origen y destino en el mapa'}</small></span><Icon name="chevron" />
         </button>
         <div id="panel-content" className="panel-content">
           <Planner config={demo.config} points={planner.points} target={target}
-            onTarget={endpoint => { setTarget(endpoint); setExpanded(false); }}
+            onTarget={endpoint => { setTarget(endpoint); if (window.innerWidth < 768) setExpanded(false); }}
             onPoint={choosePoint} onSwap={() => { planner.swap(); setTarget(null); }}
             onReset={() => { planner.reset(); setTarget('origen'); center('zone'); }}
             onCalculate={() => { setSelected('corta'); setTarget(null); void planner.calculate(); }}

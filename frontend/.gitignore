@@ -3,3 +3,6 @@ dist/
 .npm-cache/
 .env.local
 *.tsbuildinfo
+.playwright-browsers/
+test-results/
+playwright-report/

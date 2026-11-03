@@ -485,19 +485,13 @@ select {
   box-shadow:0 3px 8px #213e3445;
   font-weight:800;
   font-size:15px;
-  color:transparent;
+  color:white;
   position:relative;
 }
 
-.marker-pin::after {
-  content:'A';
-  position:absolute;
+.marker-pin > span {
   color:#fff;
   transform:rotate(45deg);
-}
-
-.marker-pin.destino::after {
-  content:'B';
 }
 
 .origen {
@@ -576,7 +570,7 @@ select {
 }
 
 .panel-expanded .journey-panel {
-  height:min(62dvh,590px,calc(100dvh - 332px));
+  height:min(58dvh,590px,calc(100dvh - 392px));
 }
 
 .planner-intro {
@@ -1481,7 +1475,27 @@ select {
 }
 
 @media(max-width:767px) {
-  .panel-expanded .map-bottom {
+  .panel-expanded:has(.prediction-legend) .journey-panel {
+    height:min(52dvh,calc(100dvh - 452px));
+  }
+  .panel-expanded .map-bottom .route-legend {
     display:none;
   }
+}
+
+/* El mismo control abre/cierra el panel lateral sin duplicar acciones. */
+@media(min-width:768px) {
+  .panel-toggle {
+    display:flex;
+    padding:12px 20px;
+    min-height:68px;
+    border-bottom:1px solid var(--line);
+  }
+  .drawer-handle { display:none; }
+  .panel-expanded .panel-toggle svg { transform:rotate(90deg); }
+  .workspace:not(.panel-expanded) { grid-template-columns:64px minmax(0,1fr); }
+  .workspace:not(.panel-expanded) .panel-content { display:none; }
+  .workspace:not(.panel-expanded) .panel-toggle { padding:10px; }
+  .workspace:not(.panel-expanded) .panel-toggle > span { display:none; }
+  .workspace:not(.panel-expanded) .panel-toggle svg { transform:rotate(-90deg); }
 }

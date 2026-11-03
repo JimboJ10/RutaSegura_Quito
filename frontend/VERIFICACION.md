@@ -1,65 +1,58 @@
-# Verificación del MVP · Frontend Fase 1
+# Verificación del frontend de RutaSegura Quito
 
-Fecha: 3 de noviembre de 2026.
+Fecha: 3 de noviembre de 2026. Auditoría responsive completada, conservando los cambios y resultados de la sesión interrumpida.
 
 ## Resultado comprobado
 
 | Comprobación | Resultado |
 |---|---|
-| `npm run build` | Correcto; TypeScript sin errores |
+| Compilación: `npm run build` | Correcta; TypeScript sin errores |
 | `npm test` | 35 aprobadas, 0 fallidas |
 | `npm run test:integration` | 7 aprobadas, 0 fallidas, contra FastAPI real |
-| Backend: `.venv\\Scripts\\python.exe -m pytest -q` | 222 aprobadas, 0 fallidas; aviso previo de deprecación Starlette/httpx |
-| Cuadrículas reales | 25, GeoJSON en longitud-latitud |
+| `npm run test:e2e` | 28 aprobadas, 0 fallidas, Chromium real |
+| Cuadrículas | 25; GeoJSON en longitud-latitud |
 | CORS local | Preflight autorizado desde 127.0.0.1:5173 |
-| Archivos protegidos | Backend, datos, resultados, GraphML y modelo sin modificaciones |
+| Capturas | 98 PNG: 49 antes y 49 después |
+| Archivos protegidos | Sin cambios en backend, GraphML, datos, resultados ni modelos |
 
-Las pruebas HTTP de integración ejecutan el cliente real del frontend con el servidor Uvicorn local. Confirman las siguientes distancias:
+La compilación y las 42 pruebas unitarias/de integración finalizaron correctamente antes de la interrupción. Después solo se ajustaron las herramientas de auditoría y la documentación: se conservaron esos resultados y se repitió la suite de navegador por el cambio en su medidor compartido. Las 222 pruebas del backend corresponden a la fase anterior y no se repitieron en esta auditoría.
 
-| Ruta | Referencia (km) | Respuesta API (km) | Diferencia (m) |
+## Regresión con FastAPI real
+
+Origen: latitud -0.201, longitud -78.504. Destino: latitud -0.184, longitud -78.486.
+
+| Ruta | Referencia (km) | API (km) | Diferencia (m) |
 |---|---:|---:|---:|
 | Corta | 3,255669 | 3,2557 | 0,031 |
 | Histórica | 3,306152 | 3,3062 | 0,048 |
 | LightGBM | 3,297791 | 3,2978 | 0,009 |
 
-Todas cumplen ±1 metro. Ajustes al nodo: 104,7 m en origen y 76,2 m en destino. No están incluidos en las distancias de recorrido.
+Todas cumplen ±1 metro y el límite del 15 %. Ajustes al nodo: 104,7 m en origen y 76,2 m en destino; excluidos de la distancia de recorrido. La interfaz muestra 3,256, 3,306 y 3,298 km al redondear a tres decimales.
 
-## Alcance de las pruebas
+## Alcance
 
-- Serialización exacta de origen/destino; coordenadas numéricas con campos `lat` y `lon`.
-- GeoJSON válido para el cliente, polígonos de un anillo y rutas MultiLineString. Rechazo de resultados incompletos e indicadores ausentes.
-- Validaciones de puntos, errores HTTP 422/503/500, falta de URL, pérdida de conexión, cancelación y timeout.
-- Respuestas antiguas ignoradas aunque el transporte no respete la cancelación.
-- Panel: ejemplo, comparación, elección de alternativa, reinicio, coordenadas manuales y reintentos.
-- Montaje de Leaflet real en jsdom, controles, activación de cuadrículas, cambio de indicador y reintento de capa.
-- Integración real: salud, configuración, 25 cuadrículas, continuidad, métricas, límite del 15 %, regresión, errores y preflight CORS.
+- Las 35 pruebas unitarias/de componentes cubren el cliente HTTP, validaciones, cancelación, respuestas antiguas, formularios y estados. Usan datos sintéticos; jsdom no verifica píxeles.
+- Las 7 pruebas de integración consultan los cuatro endpoints reales y comprueban GeoJSON, continuidad, indicadores, regresión, errores y preflight CORS.
+- Las 28 pruebas de Chromium ejecutan cuatro escenarios en cada uno de los siete tamaños: mapa, puntos, tres rutas reales, resaltado, panel, cuadrículas, intercambio, reinicio, dimensiones, atribución, controles, redimensionado, errores, carga y recuperación.
+- La demora de respuesta y los cortes de red se simulan en Playwright. La respuesta demorada conserva el contenido real de FastAPI; el error de cobertura HTTP 422 también es real.
+- Se inspeccionaron visualmente capturas de los estados principales en todos los tamaños, además de comprobar DOM e interacciones.
 
-Las pruebas de componentes utilizan datos sintéticos aislados. Las pruebas de App sustituyen el componente de mapa; las pruebas de MapView montan Leaflet real en un DOM simulado con SVG y ResizeObserver habilitados. **Ninguna de esas pruebas verifica píxeles, teselas de OpenStreetMap, gestos táctiles ni ausencia de desbordamiento.**
+| Viewport probado | Resultado final |
+|---|---|
+| 360 × 800 | Sin desbordamiento horizontal; mapa, panel y leyenda utilizables |
+| 390 × 844 | Sin desbordamiento horizontal; mapa, panel y leyenda utilizables |
+| 430 × 932 | Sin desbordamiento horizontal; mapa, panel y leyenda utilizables |
+| 768 × 1024 | Panel lateral contraíble; mapa y controles visibles |
+| 1024 × 768 | Panel lateral contraíble; mapa y controles visibles |
+| 1280 × 800 | Mapa y panel de rutas verificados |
+| 1920 × 1080 | Mapa y panel de rutas verificados |
 
-Se corrigió una carrera detectada por las pruebas: la selección inicial de «Ruta más corta» podía sobrescribir una alternativa que el usuario acababa de elegir. Ahora esa selección se establece al iniciar el cálculo.
+## Evidencias y límites
 
-## Revisión visual pendiente
+Consulta el [informe de auditoría](evidencias/auditoria-responsive/INFORME.md), la [galería antes/después](evidencias/auditoria-responsive/index.html) y el [reporte de Playwright](evidencias/auditoria-responsive/pruebas-playwright.json). La reproducción está documentada en [README.md](README.md).
 
-No se pudo abrir el navegador para inspeccionar la aplicación: la revisión automática rechazó Chrome y se rechazó la autorización para la URL local en la vista previa integrada. No se usaron mecanismos alternativos para sortear ese bloqueo.
+El navegador integrado no pudo inicializar su puente nativo. Se utilizó la alternativa Playwright + Chromium solicitada por el usuario, con los permisos de instalación y red correspondientes. Las capturas finales esperan las fuentes y el fundido de las teselas; al retomar se conservaron los PNG y solo se actualizaron las mediciones.
 
-El CSS implementa diseño Mobile First, ancho flexible, panel inferior hasta 767 px, panel lateral desde 768 px, safe areas y altura dinámica. Estos cambios **no certifican** el resultado visual sin inspección del navegador.
+Las pruebas móviles son **emulación en Chromium**, con toque automatizado en los tamaños de celular. Quedan pendientes Android/iPhone físicos, Safari/WebKit, teclado virtual, barras dinámicas, áreas seguras reales, gestos multitáctiles y auditoría completa con lector de pantalla. Se probó apertura/cierre del diálogo con teclado y botón, incluido el desplazamiento necesario en pantallas pequeñas.
 
-| Ancho solicitado | Comprobación visual de desbordamiento |
-|---:|---|
-| 360 px | Pendiente |
-| 390 px | Pendiente |
-| 768 px | Pendiente |
-| 1280 px | Pendiente |
-
-Lista para la revisión manual autorizada:
-
-1. En cada ancho, comprobar que no se requiere desplazamiento horizontal y que todos los botones se alcanzan.
-2. Abrir y cerrar el panel; verificar atribución OSM, controles de zoom, leyendas y mapa sin áreas vacías.
-3. Seleccionar ambos puntos con toque/clic, cambiar uno, intercambiar, restablecer y comparar.
-4. Usar el ejemplo conocido; elegir cada tarjeta y centrar su recorrido.
-5. Activar las 25 cuadrículas, cambiar indicador y comprobar leyenda y colores.
-6. Probar coordenadas fuera de cobertura y pérdida/recuperación de conexión.
-7. Navegar con Tab/Enter, revisar foco visible, formulario manual, diálogo y lector de pantalla.
-8. En Android/iPhone físicos: revisar orientación, teclado virtual, áreas seguras y gestos. No se han probado dispositivos físicos.
-
-No se han realizado commits, push, despliegues ni cambios de firewall.
+No se realizaron commits, push, despliegues ni cambios de firewall.

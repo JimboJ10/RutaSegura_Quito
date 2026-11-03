@@ -1,6 +1,6 @@
 # RutaSegura Quito · frontend
 
-MVP de comparación de recorridos peatonales con React, TypeScript, Vite, Leaflet y React Leaflet. Interfaz en español, panel inferior expandible en celulares y panel lateral desde 768 px. El backend y sus datos se conservan intactos.
+MVP de comparación de recorridos peatonales con React, TypeScript, Vite, Leaflet y React Leaflet. Interfaz en español, panel inferior expandible en celulares y panel lateral contraíble desde 768 px. El backend y sus datos se conservan intactos.
 
 **Demostración retrospectiva con datos de junio de 2026. Los indicadores no representan probabilidades individuales de accidente ni garantizan la seguridad de los recorridos.**
 
@@ -71,8 +71,21 @@ frontend/
 ├── tsconfig.json
 ├── vite.config.ts
 ├── vitest.integration.config.ts
+├── playwright.config.ts
 ├── README.md
 ├── VERIFICACION.md
+├── e2e/
+│   ├── audit-helpers.mjs
+│   └── responsive.spec.ts
+├── scripts/
+│   ├── run-playwright.mjs
+│   └── audit-visual.mjs
+├── evidencias/auditoria-responsive/
+│   ├── INFORME.md
+│   ├── index.html
+│   ├── pruebas-playwright.json
+│   ├── antes/
+│   └── despues/
 ├── public/
 │   └── favicon.svg
 └── src/
@@ -102,7 +115,7 @@ frontend/
 - `useRutaSegura.ts`: carga de configuración/capa y estado del recorrido. Cancelación y número de solicitud evitan que respuestas antiguas reemplacen datos nuevos.
 - `App.tsx`: composición, estado del panel, selección de alternativa, conexión y diálogo informativo.
 - `Planner`: selección, coordenadas manuales, ejemplo, intercambio, reinicio y cálculo.
-- `MapView`: OpenStreetMap, marcadores, geometrías, cuadrículas, leyendas y encuadre. ResizeObserver llama a `invalidateSize` cuando cambia el espacio del mapa.
+- `MapView`: OpenStreetMap, marcadores, geometrías, cuadrículas, leyendas y encuadre. ResizeObserver actualiza el tamaño y conserva el encuadre al cambiar el espacio del mapa. Las cuadrículas se dibujan debajo de las rutas en un pane independiente.
 - `RouteResults`: métricas, selección accesible y ajustes a la red.
 - `Icon` y `styles.css`: iconos SVG locales y presentación Mobile First.
 
@@ -112,7 +125,7 @@ No se usan router, biblioteca de estado global, geocodificación ni GPS.
 
 Ejecución: React/React DOM 19.3.1, Leaflet 1.9.4 y React Leaflet 5.0.0.
 
-Desarrollo: Vite 8.3.5, plugin React 6.2.1, TypeScript 5.9.3, tipos de React/Leaflet/GeoJSON, Vitest 5.1.0, jsdom 27.4.0 y Testing Library React 16.3.3. Se usa `npm ci` para reproducir el lock.
+Desarrollo: Vite 8.3.5, plugin React 6.2.1, TypeScript 5.9.3, tipos de React/Leaflet/GeoJSON, Vitest 5.1.0, jsdom 27.4.0, Testing Library React 16.3.3 y Playwright Test 1.64.1. Se usa `npm ci` para reproducir el lock.
 
 Las teselas de OpenStreetMap requieren internet y conservan atribución visible. No hay precarga masiva ni modo offline; se muestra un aviso y reintento ante un fallo del mapa base. Se usan fuentes de Google Fonts con alternativas del sistema si no están disponibles.
 
@@ -137,7 +150,27 @@ npm run test:integration
 
 Estas pruebas **sí consultan el backend real** mediante el mismo cliente del frontend. Verifican endpoints, 25 cuadrículas, orden de coordenadas, continuidad, indicadores, regresión ±1 metro, errores y preflight CORS. No usan fixtures en lugar de la API. Requieren `VITE_API_BASE_URL` en `.env.local`; sin backend disponible fallarán de forma explícita.
 
-`npm run preview` sirve el build en el puerto 5173. Detén primero el servidor de desarrollo si usa ese puerto. El detalle de verificación y la lista visual pendiente están en [VERIFICACION.md](VERIFICACION.md).
+### Navegador real y capturas automáticas
+
+Con FastAPI en `127.0.0.1:8000` y Vite en `127.0.0.1:5173`, desde `frontend`:
+
+```powershell
+npm run browser:install
+npm run test:e2e
+npm run audit:visual
+```
+
+La instalación descarga Chromium en `.playwright-browsers/`, excluido de Git. Se puede omitir si ya está instalado; `PLAYWRIGHT_BROWSERS_PATH` permite usar otra ubicación existente. Las pruebas necesitan acceso a las teselas de OpenStreetMap y a la API local. No abren puertos, no arrancan servidores ni modifican el backend.
+
+Playwright ejecuta cuatro escenarios en siete tamaños: **360×800, 390×844, 430×932, 768×1024, 1024×768, 1280×800 y 1920×1080**. Comprueba selección de puntos, respuestas reales, resaltado de alternativas, capas, panel, desbordamiento, controles, redimensionado, advertencias, carga, errores y recuperación. Las demoras y cortes de red son simulados; las distancias y el error de cobertura HTTP 422 proceden de FastAPI real.
+
+`npm run audit:visual` guarda 49 PNG y mediciones DOM en `evidencias/auditoria-responsive/despues/`, esperando las fuentes y el fundido de las teselas. **Sobrescribe esa carpeta de evidencias** al repetirlo. La línea base `antes/` corresponde al código previo a las correcciones y debe conservarse. Las capturas requieren inspección visual; el script no interpreta su contenido.
+
+Si solo cambia el medidor de pruebas y la aplicación sigue igual, `npm run audit:visual -- --solo-mediciones` actualiza el JSON recorriendo los mismos estados sin volver a generar los PNG.
+
+Abre la [galería antes/después](evidencias/auditoria-responsive/index.html) como archivo local. El [informe visual](evidencias/auditoria-responsive/INFORME.md) registra defectos y límites, y [VERIFICACION.md](VERIFICACION.md) resume los resultados. El reporte de las 28 pruebas queda en `evidencias/auditoria-responsive/pruebas-playwright.json`; las trazas de fallos quedan en `test-results/`, excluido de Git.
+
+`npm run preview` sirve el build en el puerto 5173. Detén primero el servidor de desarrollo si usa ese puerto.
 
 ## Celulares en la misma Wi-Fi
 
@@ -176,5 +209,5 @@ Utiliza solo una red privada de confianza. El firewall puede bloquear Python/Nod
 - Una capa de predicciones no disponible no bloquea la selección de puntos ni el cálculo de rutas si el arranque ya obtuvo la configuración.
 - El cliente hace validaciones básicas; el backend sigue siendo la autoridad para cobertura, ajuste máximo y conectividad.
 - El diseño tiene safe areas, altura `dvh`, controles de al menos 44 px, alternativa manual por teclado, focos visibles y movimiento reducido. No equivale a una auditoría completa de accesibilidad.
-- **Pendiente:** comprobar visualmente 360, 390, 768 y 1280 px, mapa, panel, teclado virtual y dispositivos Android/iPhone. El acceso al navegador fue rechazado; no se certifica ausencia de desbordamiento con pruebas jsdom.
+- Auditoría visual completada en Chromium en los siete tamaños indicados, con capturas inspeccionadas y sin desbordamiento horizontal en los estados revisados. Es emulación móvil, no una prueba en teléfonos físicos. Quedan pendientes Safari/WebKit, teclado virtual, barras dinámicas, áreas seguras y gestos en Android/iPhone reales.
 - El contrato completo sigue en [FRONTEND_API.md](../backend/FRONTEND_API.md). No se modificó ningún archivo del backend.
