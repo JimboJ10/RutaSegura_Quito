@@ -9,8 +9,9 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from config import MAX_AJUSTE_M, PERIODO
+from config import CORS_ORIGINS, CRS_ESPERADO, DESVIO_MAX, MAX_AJUSTE_M, PERIODO, PROYECTO, VERSION_API
 from geojson import coleccion_geojson
+from predicciones import PrediccionesNoDisponibles, cargar_predicciones
 from rutas import calcular_recorridos
 from schemas import SolicitudRuta
 
@@ -40,10 +41,17 @@ async def error_interno(request, exc):
         "Error interno en %s %s", request.method, request.url.path,
         exc_info=(type(exc), exc, exc.__traceback__),
     )
-    return JSONResponse(
+    respuesta = JSONResponse(
         status_code=500,
         content={"detail": "No se pudo procesar la solicitud por un error interno."},
     )
+    # El manejador 500 se ejecuta fuera del middleware CORS de FastAPI.
+    # Conservamos la misma lista explícita para que React pueda leer este error.
+    origen = request.headers.get("origin")
+    if origen in CORS_ORIGINS:
+        respuesta.headers["Access-Control-Allow-Origin"] = origen
+        respuesta.headers.add_vary_header("Origin")
+    return respuesta
 
 
 def obtener_grafo(request):
@@ -51,6 +59,57 @@ def obtener_grafo(request):
     if G is None:
         raise HTTPException(status_code=503, detail="La red de rutas no está disponible.")
     return G
+
+
+class RespuestaGeoJSON(JSONResponse):
+    media_type = "application/geo+json"
+
+
+def obtener_predicciones():
+    try:
+        return cargar_predicciones()
+    except PrediccionesNoDisponibles as exc:
+        logger.error("No se pudo cargar la capa de predicciones", exc_info=True)
+        raise HTTPException(
+            status_code=503,
+            detail="Las predicciones de la demostración no están disponibles.",
+        ) from exc
+
+
+@router.get(
+    "/predicciones", response_class=RespuestaGeoJSON,
+    summary="Cuadrículas de predicción retrospectiva de junio de 2026",
+    responses={503: {"description": "Archivo de predicciones ausente o inválido"}},
+)
+def predicciones():
+    datos, _ = obtener_predicciones()
+    return datos
+
+
+@router.get(
+    "/config", summary="Configuración pública de la demostración",
+    responses={503: {"description": "No está disponible la cobertura de predicciones"}},
+)
+def configuracion_publica():
+    _, bbox = obtener_predicciones()
+    return {
+        "proyecto": PROYECTO,
+        "version_api": VERSION_API,
+        "zona_demo": "Zona de demostración de Quito",
+        "bbox": bbox,
+        "periodo": PERIODO,
+        "tipo": "demostracion_retrospectiva",
+        "metodos": ["corta", "historica", "lightgbm"],
+        "desvio_maximo_pct": int(DESVIO_MAX * 100),
+        "distancia_maxima_ajuste_m": MAX_AJUSTE_M,
+        "crs": CRS_ESPERADO,
+        "advertencias": [
+            "Predicciones de junio de 2026: demostración retrospectiva, no en tiempo real.",
+            "Los indicadores no representan probabilidades individuales de accidente ni garantizan mayor seguridad.",
+            "Las cuadrículas muestran conteos mensuales estimados por celda de 1 km²; el recorte visual no prorratea esos conteos.",
+            "Las distancias y el desvío se calculan entre nodos ajustados y excluyen el acceso desde las coordenadas solicitadas.",
+        ],
+    }
 
 
 @router.get("/health")
