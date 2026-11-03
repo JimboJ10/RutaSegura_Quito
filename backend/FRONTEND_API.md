@@ -2,6 +2,8 @@
 
 API experimental para React y Leaflet. Los ejemplos de datos siguientes se obtuvieron del backend local; las predicciones corresponden exclusivamente a junio de 2026.
 
+La instalación, arquitectura, archivos de datos y pruebas por Wi-Fi desde celulares se explican en [README.md](README.md). Este documento mantiene el contrato HTTP y la interpretación de sus datos.
+
 ## Inicio y configuración de acceso
 
 Desde `backend`, con el entorno existente activado, sigue funcionando:
@@ -221,8 +223,17 @@ Las distancias e índices de rutas excluyen esos accesos. El 15 % se aplica úni
 
 Fragmentos de integración, sin crear componentes ni una aplicación frontend:
 
+En la raíz del futuro proyecto Vite, configura `.env.local`. Para probar solo en la computadora:
+
+```dotenv
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+Para Android o iPhone en la misma Wi-Fi, sustituye el valor por `http://<IP_LOCAL_PC>:8000`, reemplazando el marcador por la IPv4 de la computadora. `localhost` o `127.0.0.1` en el teléfono apuntan al propio teléfono. Reinicia Vite después de cambiar la variable; en una compilación, el valor queda incorporado al construirla. Las variables `VITE_` son públicas y no deben contener secretos. Véase [variables de entorno de Vite](https://vite.dev/guide/env-and-mode).
+
 ```javascript
-const API_BASE = 'http://127.0.0.1:8000'; // Configurable al desplegar.
+const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '');
+if (!API_BASE) throw new Error('Falta configurar VITE_API_BASE_URL');
 
 async function apiJson(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -255,6 +266,8 @@ const rutas = await apiJson('/rutas', {
 
 Captura los errores con `try/catch` y presenta `error.message` como texto. Un fallo de red o bloqueo CORS puede impedir que `fetch` entregue una respuesta HTTP: comprueba que el servidor esté activo y que el origen exacto del navegador figure en la lista.
 
+En Wi-Fi, el origen que debe autorizar el backend es `http://<IP_LOCAL_PC>:5173`, porque allí se sirve el frontend; no es la IP del teléfono ni la URL del backend en el puerto 8000. Los pasos para escuchar en la red local y revisar el firewall están en el README.
+
 ## Geometrías y Leaflet
 
 GeoJSON usa `[longitud, latitud]`. `L.geoJSON` hace la conversión; entrégale la colección sin invertir sus coordenadas. En cambio, `L.latLng`, los marcadores y `fitBounds` usan `[latitud, longitud]`. Los ejemplos utilizan la [API de Leaflet 1.9.4](https://leafletjs.com/reference-1.9.4.html#geojson).
@@ -284,6 +297,16 @@ L.geoJSON(cuadriculas, {
 ```
 
 Esta capa colorea polígonos. Muestra una leyenda con el indicador elegido, sus valores mínimo/máximo y la unidad de conteos mensuales estimados por celda; la opacidad relativa no es una probabilidad. Mantén las advertencias visibles al cambiar de indicador.
+
+## Recomendaciones para Mobile First
+
+- Mantener una selección manual de origen/destino con confirmación explícita; mostrar los dos puntos solicitados y sus ajustes a la red.
+- Diseñar controles táctiles de al menos 44–48 px, etiquetas legibles y un panel de resultados plegable que deje espacio al mapa. No depender exclusivamente del color para distinguir rutas.
+- Dar altura explícita al contenedor del mapa. Considerar barras del navegador y áreas seguras del teléfono; ejecutar `map.invalidateSize()` cuando un cambio de panel u orientación altere su tamaño.
+- Consultar `/config` y `/predicciones` al iniciar y reutilizar las capas. Calcular rutas al confirmar los puntos, no con cada movimiento del mapa; evitar que una respuesta antigua reemplace la solicitud más reciente.
+- Mostrar estados de carga, errores y el periodo retrospectivo. Conservar las tres modalidades aunque sus geometrías coincidan.
+- La geolocalización del navegador necesita un contexto seguro y permiso del usuario. Una página HTTP servida mediante la IP de la computadora no debe depender de ese acceso; mantener selección manual para la demo por Wi-Fi. Véase [Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API).
+- Antes de dar por validado el frontend, probar físicamente Android y iPhone, orientación vertical/horizontal, zoom táctil, teclado abierto, red lenta y recuperación de errores. Estas comprobaciones todavía no se han realizado: el frontend no existe en esta fase.
 
 ## Errores HTTP y mensajes
 
