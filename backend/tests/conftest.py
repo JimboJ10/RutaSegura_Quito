@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(scope="session")
 def cliente():
-    # La importación carga el grafo una sola vez, sin sustituir el enrutamiento.
+    # El contexto de TestClient inicia la aplicación y carga el grafo real.
     from main import app
 
     with TestClient(app, raise_server_exceptions=False) as client:
