@@ -1,8 +1,14 @@
-# Contrato de integración: RutaSegura Quito
+# Contrato de integración: RutaInformada Quito
+
+**Decide tu camino con datos.**
+
+Aplicación web experimental que permite comparar rutas peatonales en una zona del centro-norte de Quito utilizando información histórica de siniestros de tránsito e inteligencia artificial.
 
 API experimental para React y Leaflet. Los ejemplos de datos siguientes se obtuvieron del backend local; las predicciones corresponden exclusivamente a junio de 2026.
 
 La instalación, arquitectura, archivos de datos y pruebas por Wi-Fi desde celulares se explican en [README.md](README.md). Este documento mantiene el contrato HTTP y la interpretación de sus datos.
+
+La identidad pública es **RutaInformada Quito**. `proyecto` es un texto de presentación y ahora devuelve ese nombre en `/health` y `/config`; no cambia ninguna clave JSON ni endpoint. Los identificadores técnicos y las variables de entorno existentes se conservan.
 
 ## Inicio y configuración de acceso
 
@@ -41,7 +47,7 @@ Respuesta completa HTTP 200:
 ```json
 {
   "estado": "ok",
-  "proyecto": "RutaSegura Quito",
+  "proyecto": "RutaInformada Quito",
   "nodos": 14934,
   "aristas": 44672,
   "periodo": "2026-06"
@@ -56,7 +62,7 @@ Respuesta completa HTTP 200:
 
 ```json
 {
-  "proyecto": "RutaSegura Quito",
+  "proyecto": "RutaInformada Quito",
   "version_api": "0.1.0",
   "zona_demo": "Zona de demostración de Quito",
   "bbox": [
@@ -223,7 +229,7 @@ Las distancias e índices de rutas excluyen esos accesos. El 15 % se aplica úni
 
 Fragmentos de integración, sin crear componentes ni una aplicación frontend:
 
-En la raíz del futuro proyecto Vite, configura `.env.local`. Para probar solo en la computadora:
+En la raíz de `frontend`, configura `.env.local`. Para probar solo en la computadora:
 
 ```dotenv
 VITE_API_BASE_URL=http://127.0.0.1:8000

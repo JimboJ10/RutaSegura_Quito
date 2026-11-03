@@ -1,4 +1,4 @@
-"""Punto de entrada de FastAPI para RutaSegura Quito."""
+"""Punto de entrada de FastAPI para RutaInformada Quito."""
 
 from contextlib import asynccontextmanager
 

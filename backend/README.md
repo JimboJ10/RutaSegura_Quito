@@ -1,10 +1,16 @@
-# RutaSegura Quito — backend
+# RutaInformada Quito — backend
+
+**Decide tu camino con datos.**
+
+Aplicación web experimental que permite comparar rutas peatonales en una zona del centro-norte de Quito utilizando información histórica de siniestros de tránsito e inteligencia artificial.
 
 API experimental de comparación de rutas peatonales para STEMergent Hacks 2026. A partir de un origen y destino dentro de la zona demo de Quito, devuelve una ruta corta y dos alternativas basadas en indicadores históricos y LightGBM.
 
 La demostración utiliza predicciones **retrospectivas de junio de 2026**. No ofrece predicciones actuales, probabilidades individuales de accidente ni una garantía de mayor seguridad.
 
-Este README cubre instalación, operación y pruebas. [FRONTEND_API.md](FRONTEND_API.md) describe el contrato HTTP, los campos, ejemplos completos y su uso con React + Vite + Leaflet. El frontend todavía no está implementado.
+El nombre público es **RutaInformada Quito**; la carpeta `RutaSegura_Quito` y la variable `RUTASEGURA_CORS_ORIGINS` conservan sus nombres técnicos. Solo cambia el texto de presentación `proyecto` en `/health` y `/config`, además del título de Swagger; claves, endpoints y formatos siguen iguales.
+
+Este README cubre instalación, operación y pruebas. [FRONTEND_API.md](FRONTEND_API.md) describe el contrato HTTP, los campos, ejemplos completos y su uso con React + Vite + Leaflet. El frontend React + Vite + Leaflet está documentado en [su README](../frontend/README.md).
 
 ## Arquitectura y archivos
 
@@ -173,7 +179,7 @@ Respuesta completa de `/health`:
 ```json
 {
   "estado": "ok",
-  "proyecto": "RutaSegura Quito",
+  "proyecto": "RutaInformada Quito",
   "nodos": 14934,
   "aristas": 44672,
   "periodo": "2026-06"
@@ -273,7 +279,7 @@ Usa esta escucha solo durante pruebas en la red local. No configures reenvío de
 
 ### 3. Preparar el futuro frontend Vite
 
-Cuando exista el proyecto frontend, crea su `.env.local` en la raíz de Vite. Para probar solo desde la computadora:
+En `frontend`, utiliza `.env.local` en la raíz de Vite. Para probar solo desde la computadora:
 
 ```dotenv
 VITE_API_BASE_URL=http://127.0.0.1:8000
@@ -287,7 +293,7 @@ VITE_API_BASE_URL=http://<IP_LOCAL_PC>:8000
 
 Reemplaza el marcador; no lo copies literalmente. No se fija ninguna IP personal en el código. El cliente lee `import.meta.env.VITE_API_BASE_URL`, como muestra [FRONTEND_API.md](FRONTEND_API.md). Reinicia Vite cuando cambies `.env.local`; sus variables son cadenas visibles para el navegador y no deben contener secretos. [Documentación de Vite](https://vite.dev/guide/env-and-mode).
 
-Desde el futuro proyecto frontend:
+Desde `frontend`:
 
 ```powershell
 npm run dev -- --host 0.0.0.0 --port 5173 --strictPort

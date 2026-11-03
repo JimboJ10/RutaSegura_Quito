@@ -10,7 +10,7 @@ export function Planner({ config, points, target, onTarget, onPoint, onSwap, onR
 }) {
   const [manualError, setManualError] = useState('');
   return <section className="planner" aria-label="Planificar recorrido">
-    <div className="planner-intro"><p className="eyebrow">QUITO, A PIE</p><h1>Tu camino.<br /><span>Más perspectiva.</span></h1><p>Compara distancias e indicadores.<br />Elige dos puntos para empezar.</p></div>
+    <div className="planner-intro"><p className="eyebrow">QUITO, A PIE</p><h1>Decide tu camino<br /> <span>con datos.</span></h1><p>Compara distancias e indicadores.<br />Elige dos puntos para empezar.</p></div>
     <div className="point-fields">
       {(['origen', 'destino'] as const).map((endpoint, index) => <button key={endpoint} className={`point-button ${target === endpoint ? 'active' : ''}`}
         aria-pressed={target === endpoint} onClick={() => onTarget(endpoint)}>

@@ -125,7 +125,7 @@ def test_config_publica_coincide_con_la_cobertura_real(cliente):
     respuesta = cliente.get("/config")
     assert respuesta.status_code == 200
     datos = respuesta.json()
-    assert datos["proyecto"] == "RutaSegura Quito"
+    assert datos["proyecto"] == "RutaInformada Quito"
     assert datos["version_api"] == VERSION_API
     assert datos["zona_demo"] == "Zona de demostración de Quito"
     assert datos["periodo"] == "2026-06"

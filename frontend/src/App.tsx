@@ -8,6 +8,7 @@ import { periodLabel } from './types';
 import type { Endpoint, Point, RouteId } from './types';
 
 const WARNING = 'Demostración retrospectiva con datos de junio de 2026. Los indicadores no representan probabilidades individuales de accidente ni garantizan la seguridad de los recorridos.';
+const DESCRIPTION = 'Aplicación web experimental que permite comparar rutas peatonales en una zona del centro-norte de Quito utilizando información histórica de siniestros de tránsito e inteligencia artificial.';
 
 export default function App() {
   const demo = useDemo();
@@ -19,6 +20,13 @@ export default function App() {
   const [offline, setOffline] = useState(!navigator.onLine);
   const dialog = useRef<HTMLDialogElement>(null);
   const resultsStart = useRef<HTMLDivElement>(null);
+  const openInfo = () => {
+    const info = dialog.current;
+    if (!info) return;
+    info.showModal();
+    info.querySelector<HTMLElement>('#data-title')?.focus({ preventScroll: true });
+    info.scrollTop = 0;
+  };
   const center = (kind: 'zone' | 'route') => setFocus(previous => ({ kind, serial: previous.serial + 1 }));
   useEffect(() => {
     const online = () => setOffline(false);
@@ -42,12 +50,12 @@ export default function App() {
   return <div className="app-shell">
     <a className="skip-link" href="#journey-panel">Ir al panel de recorridos</a>
     <header className="app-header">
-      <a className="brand" href="./" aria-label="RutaSegura Quito, inicio"><span className="brand-symbol"><Icon name="route" /></span><span>RutaSegura<span className="brand-city">QUITO</span></span></a>
+      <a className="brand" href="./" aria-label="RutaInformada Quito, inicio"><span className="brand-symbol"><Icon name="route" /></span><span>RutaInformada<span className="brand-city">QUITO</span></span></a>
       <div className="header-right"><span className="experimental-tag">Explorador peatonal</span><span className={`connection ${demo.error || offline ? 'unavailable' : ''}`} role="status"><span className="live-dot" />{offline ? 'Sin conexión' : demo.loading ? 'Conectando…' : demo.error ? 'API no disponible' : 'Demo conectada'}</span></div>
     </header>
     {offline && <div className="offline-banner" role="alert">Sin conexión a la red. Revisa tu Wi-Fi y vuelve a intentar la operación.</div>}
     {!demo.config ? <main className="startup-state">
-      <span className="large-symbol"><Icon name="route" /></span><p className="eyebrow">EXPLORA QUITO CON MÁS INFORMACIÓN</p>
+      <span className="large-symbol"><Icon name="route" /></span><p className="eyebrow">Decide tu camino con datos.</p>
       <h1>{demo.loading ? 'Preparando tu mapa…' : 'No pudimos conectar'}</h1>
       {demo.loading ? <p role="status">Cargando la zona disponible y la red peatonal.</p> : <><p role="alert">{demo.error}</p><button className="primary" onClick={demo.retry}>Intentar nuevamente<Icon name="reset" /></button></>}
     </main> : <main className={`workspace ${expanded ? 'panel-expanded' : ''}`}>
@@ -67,7 +75,7 @@ export default function App() {
               setTarget(null); center('zone');
             }} loading={planner.loading} error={planner.error} />
           {planner.routes ? <div ref={resultsStart}><p className="sr-only" role="status">Tres alternativas disponibles. Selecciona una para comparar sus indicadores.</p><RouteResults routes={planner.routes} selected={selected} onSelect={setSelected} onFocus={() => { center('route'); setExpanded(false); }} /></div> :
-            <div className="empty-state"><span className="empty-icon"><Icon name="walk" /></span><strong>Una ciudad. Distintos caminos.</strong><p>Compara la ruta más corta con alternativas basadas en datos históricos y LightGBM.</p></div>}
+            <div className="empty-state"><span className="empty-icon"><Icon name="walk" /></span><strong>Decide tu camino con datos.</strong><p>{DESCRIPTION}</p></div>}
           <p className="panel-footnote"><Icon name="info" />Ajuste máximo a la red: {demo.config.distancia_maxima_ajuste_m} m. Sin cálculo de accesos peatonales.</p>
         </div>
       </aside>
@@ -75,9 +83,10 @@ export default function App() {
         selected={selected} onSelect={setSelected} focus={focus} onCenter={() => center('zone')}
         predictions={demo.predictions} predictionLoading={demo.predictionLoading} predictionError={demo.predictionError} onRetryPredictions={demo.retryPredictions} />
     </main>}
-    <footer className="app-footer"><span><span className="demo-label">DEMO</span>Retrospectiva · {demo.config ? periodLabel(demo.config.periodo) : 'junio de 2026'}</span><button onClick={() => dialog.current?.showModal()}><Icon name="info" /><span>Sobre los datos</span></button></footer>
+    <footer className="app-footer"><span><span className="demo-label">DEMO</span>Retrospectiva · {demo.config ? periodLabel(demo.config.periodo) : 'junio de 2026'}</span><button onClick={openInfo}><Icon name="info" /><span>Sobre los datos</span></button></footer>
     <dialog ref={dialog} className="data-dialog" aria-labelledby="data-title">
-      <p className="eyebrow">UNA DEMOSTRACIÓN, CON CONTEXTO</p><h2 id="data-title">Cómo leer este mapa</h2><p className="main-warning">{WARNING}</p>
+      <p className="eyebrow">RutaInformada Quito · Experimental</p><h2 id="data-title" tabIndex={-1}>Cómo leer este mapa</h2><p className="main-warning">{WARNING}</p>
+      <p>{DESCRIPTION}</p>
       <ul>{demo.config?.advertencias.map(text => <li key={text}>{text}</li>)}</ul>
       <p>Las rutas parten y terminan en nodos ajustados. La distancia al nodo no es un itinerario de acceso. El límite del 15 % se aplica entre esos nodos.</p>
       <form method="dialog"><button className="primary full-width">Entendido, volver al mapa</button></form>

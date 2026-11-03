@@ -16,7 +16,7 @@ def test_health_responde_200_con_el_grafo_demo(cliente):
     assert respuesta.status_code == 200, respuesta.text
     assert respuesta.json() == {
         "estado": "ok",
-        "proyecto": "RutaSegura Quito",
+        "proyecto": "RutaInformada Quito",
         "nodos": 14934,
         "aristas": 44672,
         "periodo": "2026-06",

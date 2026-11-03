@@ -117,7 +117,7 @@ def health(request: Request):
     G = obtener_grafo(request)
     return {
         "estado": "ok",
-        "proyecto": "RutaSegura Quito",
+        "proyecto": PROYECTO,
         "nodos": G.number_of_nodes(),
         "aristas": G.number_of_edges(),
         "periodo": PERIODO

@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 GRAFO = ROOT / "red_vial" / "quito_demo_con_predicciones.graphml"
 PREDICCIONES = ROOT / "resultados" / "predicciones_demo_junio2026.geojson"
-PROYECTO = "RutaSegura Quito"
+PROYECTO = "RutaInformada Quito"
 VERSION_API = "0.1.0"
 
 ALPHAS = [0.25, 0.5, 1, 2, 4, 8, 16]

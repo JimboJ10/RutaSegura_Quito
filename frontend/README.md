@@ -1,8 +1,14 @@
-# RutaSegura Quito · frontend
+# RutaInformada Quito · frontend
 
-MVP de comparación de recorridos peatonales con React, TypeScript, Vite, Leaflet y React Leaflet. Interfaz en español, panel inferior expandible en celulares y panel lateral contraíble desde 768 px. El backend y sus datos se conservan intactos.
+**Decide tu camino con datos.**
+
+Aplicación web experimental que permite comparar rutas peatonales en una zona del centro-norte de Quito utilizando información histórica de siniestros de tránsito e inteligencia artificial.
+
+MVP de comparación de recorridos peatonales con React, TypeScript, Vite, Leaflet y React Leaflet. Interfaz en español, panel inferior expandible en celulares y panel lateral contraíble desde 768 px. La identidad pública también se refleja en `/health`, `/config` y Swagger; el contrato, los datos y el algoritmo se conservan.
 
 **Demostración retrospectiva con datos de junio de 2026. Los indicadores no representan probabilidades individuales de accidente ni garantizan la seguridad de los recorridos.**
+
+El nombre público es **RutaInformada Quito**. Se conservan los identificadores técnicos `RutaSegura_Quito`, `rutasegura-quito`, `useRutaSegura.ts` y `RUTASEGURA_CORS_ORIGINS` para mantener compatibilidad. Las capturas y el informe de la auditoría anterior documentan la identidad usada entonces; la verificación del cambio está en [IDENTIDAD.md](IDENTIDAD.md).
 
 ## Requisitos e instalación
 
@@ -74,8 +80,10 @@ frontend/
 ├── playwright.config.ts
 ├── README.md
 ├── VERIFICACION.md
+├── IDENTIDAD.md
 ├── e2e/
 │   ├── audit-helpers.mjs
+│   ├── identity.spec.ts
 │   └── responsive.spec.ts
 ├── scripts/
 │   ├── run-playwright.mjs
@@ -162,13 +170,13 @@ npm run audit:visual
 
 La instalación descarga Chromium en `.playwright-browsers/`, excluido de Git. Se puede omitir si ya está instalado; `PLAYWRIGHT_BROWSERS_PATH` permite usar otra ubicación existente. Las pruebas necesitan acceso a las teselas de OpenStreetMap y a la API local. No abren puertos, no arrancan servidores ni modifican el backend.
 
-Playwright ejecuta cuatro escenarios en siete tamaños: **360×800, 390×844, 430×932, 768×1024, 1024×768, 1280×800 y 1920×1080**. Comprueba selección de puntos, respuestas reales, resaltado de alternativas, capas, panel, desbordamiento, controles, redimensionado, advertencias, carga, errores y recuperación. Las demoras y cortes de red son simulados; las distancias y el error de cobertura HTTP 422 proceden de FastAPI real.
+Playwright ejecuta cuatro escenarios funcionales y uno de identidad en siete tamaños: **360×800, 390×844, 430×932, 768×1024, 1024×768, 1280×800 y 1920×1080**; son 35 pruebas en total. Comprueba selección de puntos, respuestas reales, resaltado de alternativas, capas, panel, desbordamiento, controles, redimensionado, advertencias, carga, errores, recuperación, nombre público y presentación científica. Las demoras y cortes de red son simulados; las distancias y el error de cobertura HTTP 422 proceden de FastAPI real.
 
 `npm run audit:visual` guarda 49 PNG y mediciones DOM en `evidencias/auditoria-responsive/despues/`, esperando las fuentes y el fundido de las teselas. **Sobrescribe esa carpeta de evidencias** al repetirlo. La línea base `antes/` corresponde al código previo a las correcciones y debe conservarse. Las capturas requieren inspección visual; el script no interpreta su contenido.
 
 Si solo cambia el medidor de pruebas y la aplicación sigue igual, `npm run audit:visual -- --solo-mediciones` actualiza el JSON recorriendo los mismos estados sin volver a generar los PNG.
 
-Abre la [galería antes/después](evidencias/auditoria-responsive/index.html) como archivo local. El [informe visual](evidencias/auditoria-responsive/INFORME.md) registra defectos y límites, y [VERIFICACION.md](VERIFICACION.md) resume los resultados. El reporte de las 28 pruebas queda en `evidencias/auditoria-responsive/pruebas-playwright.json`; las trazas de fallos quedan en `test-results/`, excluido de Git.
+Abre la [galería antes/después](evidencias/auditoria-responsive/index.html) como archivo local. El [informe visual](evidencias/auditoria-responsive/INFORME.md) registra defectos y límites, y [VERIFICACION.md](VERIFICACION.md) resume aquella auditoría. El reporte predeterminado de Playwright queda en `evidencias/auditoria-responsive/pruebas-playwright.json`; las trazas de fallos quedan en `test-results/`, excluido de Git. La verificación de identidad guarda sus capturas y reportes en `evidencias/identidad-publica/`, según [IDENTIDAD.md](IDENTIDAD.md).
 
 `npm run preview` sirve el build en el puerto 5173. Detén primero el servidor de desarrollo si usa ese puerto.
 
