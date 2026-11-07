@@ -1,0 +1,22 @@
+{
+  "version": "demo-peatonal-v1-2026-11-04",
+  "periodo": "2026-06",
+  "crs": "EPSG:4326",
+  "politica_acceso": "peatonal-v1",
+  "nodos": 14686,
+  "aristas": 43248,
+  "componentes": 61,
+  "cuadriculas": 25,
+  "archivos": {
+    "grafo": {
+      "ruta": "red_vial/acceso_peatonal_v1/quito_demo_peatonal_filtrado.graphml",
+      "bytes": 24937786,
+      "sha256": "d41c22b44b4a445ecf899633b52011d5002d272707be07bc3c67e59baceba824"
+    },
+    "predicciones": {
+      "ruta": "resultados/predicciones_demo_junio2026.geojson",
+      "bytes": 11284,
+      "sha256": "1a3fef11f33ddcd5b2720b69b3ff0ccc5d4d2719d6e4fb11e862defee353a2d0"
+    }
+  }
+}
