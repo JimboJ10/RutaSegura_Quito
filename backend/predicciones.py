@@ -9,7 +9,8 @@ from threading import Lock
 from pyproj import CRS
 from shapely.geometry import shape
 
-from config import CRS_ESPERADO, PERIODO, PREDICCIONES
+from config import COBERTURA, CRS_ESPERADO, PERIODO, PREDICCIONES
+from datos_mvp import ROOT as DATOS_ROOT, RUTAS, verificar_archivo
 
 
 class PrediccionesNoDisponibles(RuntimeError):
@@ -87,10 +88,33 @@ def validar_predicciones(datos):
             max(b[2] for b in limites), max(b[3] for b in limites)]
 
 
+def completar_fechas_ampliadas(datos):
+    """Expone año y mes del contrato a partir del periodo del archivo ampliado."""
+    features = datos["features"]
+    if not isinstance(features, list) or len(features) != 99:
+        raise ValueError("La capa ampliada requiere 99 cuadrículas")
+    anio, mes = map(int, PERIODO.split("-"))
+    celdas = set()
+    for indice, feature in enumerate(features):
+        propiedades = feature["properties"]
+        if propiedades.get("periodo") != PERIODO:
+            raise ValueError(f"Cuadrícula {indice}: el periodo debe ser {PERIODO}")
+        celda = (propiedades.get("cx"), propiedades.get("cy"))
+        if any(type(valor) is not int for valor in celda) or celda in celdas:
+            raise ValueError(f"Cuadrícula {indice}: identificador de celda inválido o duplicado")
+        celdas.add(celda)
+        propiedades.setdefault("anio", anio)
+        propiedades.setdefault("mes", mes)
+
+
 def leer_predicciones(ruta):
     ruta = Path(ruta)
     try:
+        if ruta.resolve() == (DATOS_ROOT / RUTAS["predicciones"]).resolve():
+            verificar_archivo("predicciones")
         datos = json.loads(ruta.read_text(encoding="utf-8-sig"))
+        if COBERTURA == "ampliada":
+            completar_fechas_ampliadas(datos)
         bbox = validar_predicciones(datos)
     except Exception as exc:
         raise PrediccionesNoDisponibles(f"Predicciones no disponibles en '{ruta}': {exc}") from exc

@@ -70,6 +70,7 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
   const [tileError, setTileError] = useState(false);
   const [tileAttempt, setTileAttempt] = useState(0);
   const [west, south, east, north] = config.bbox;
+  const zona = config.zona_demo === 'Zona de demostración de Quito' ? 'Zona demo · Quito' : config.zona_demo;
   const range = useMemo(() => {
     const values = predictions?.features.map(f => f.properties[field]) ?? [0];
     return { min: Math.min(...values), max: Math.max(...values) };
@@ -101,7 +102,7 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
       <MapAccessibility />
     </MapContainer>
     <button className="map-center" onClick={onCenter}><Icon name="target" /><span>Centrar zona</span></button>
-    <div className="map-topbar"><span className="map-place"><span className="live-dot" />Zona demo · Quito</span><button className="layer-button" aria-expanded={layersOpen} aria-controls="layer-settings" onClick={() => setLayersOpen(v => !v)}><Icon name="layers" />Capas</button></div>
+    <div className="map-topbar"><span className="map-place"><span className="live-dot" />{zona}</span><button className="layer-button" aria-expanded={layersOpen} aria-controls="layer-settings" onClick={() => setLayersOpen(v => !v)}><Icon name="layers" />Capas</button></div>
     {layersOpen && <div id="layer-settings" className="layer-settings">
       <div className="layer-heading"><strong>Indicadores por cuadrícula</strong><button className="text-button" onClick={() => setLayersOpen(false)} aria-label="Cerrar opciones de capas">Cerrar</button></div>
       {predictionLoading ? <p role="status">Cargando cuadrículas…</p> : predictionError ? <div role="alert"><p>{predictionError}</p><button className="secondary" onClick={onRetryPredictions}>Reintentar capa</button></div> : <>

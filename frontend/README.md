@@ -6,9 +6,13 @@ Aplicación web experimental que permite comparar rutas peatonales en una zona d
 
 MVP de comparación de recorridos peatonales con React, TypeScript, Vite, Leaflet y React Leaflet. Interfaz en español, panel inferior expandible en celulares y panel lateral contraíble desde 768 px. La identidad pública también se refleja en `/health`, `/config` y Swagger; el contrato, los datos y el algoritmo se conservan.
 
+Para conectar el frontend a la demo peatonal filtrada sin modificar `.env.local`, consulta el [ensayo aislado de integración](../backend/INTEGRACION_DEMO_FILTRADA.md). Usa `main:app` en `127.0.0.1:8802` y el servidor de pruebas Vite en `127.0.0.1:5185`; el proxy `/api` mantiene las solicitudes locales. El panel presenta tres modalidades, que pueden compartir el mismo recorrido.
+
 **Demostración retrospectiva con datos de junio de 2026. Los indicadores no representan probabilidades individuales de accidente ni garantizan la seguridad de los recorridos.**
 
 El nombre público es **RutaInformada Quito**. Se conservan los identificadores técnicos `RutaSegura_Quito`, `rutasegura-quito`, `useRutaSegura.ts` y `RUTASEGURA_CORS_ORIGINS` para mantener compatibilidad. Las capturas y el informe de la auditoría anterior documentan la identidad usada entonces; la verificación del cambio está en [IDENTIDAD.md](IDENTIDAD.md).
+
+El backend inicia ahora con la **demo filtrada predeterminada**. No es necesario establecer variables de cobertura/red. Consulta [MVP_FILTRADO.md](../backend/MVP_FILTRADO.md) para obtener los dos datos obligatorios, verificar su integridad y ejecutar ambos servicios. Las capturas y cifras anteriores siguen siendo evidencia histórica; no se han vuelto a ejecutar por este cambio de selección.
 
 ## Requisitos e instalación
 
@@ -58,7 +62,7 @@ Aplica el mismo prefijo a `ci`, `test` o `run build` si fuera necesario. Ajusta 
 4. «Comparar recorridos» envía exclusivamente `{ origen: { lat, lon }, destino: { lat, lon } }` a `POST /rutas`.
 5. Elige una de las tres tarjetas. El mapa conserva las otras alternativas atenuadas; etiquetas 01/02/03 y trazos diferentes complementan los colores.
 6. «Ver recorrido seleccionado» encuadra la geometría. «Centrar zona» recupera el bbox disponible.
-7. En «Capas», muestra las 25 cuadrículas y cambia entre histórico y LightGBM. La escala usa el mínimo y máximo del campo seleccionado; las unidades son conteos mensuales estimados por celda original de 1 km². Los valores no se convierten a probabilidades.
+7. En «Capas», muestra las cuadrículas de la zona activa y cambia entre histórico y LightGBM. La demo tiene 25 celdas y el ensayo ampliado tiene 99. La escala usa el mínimo y máximo del campo seleccionado. Las unidades son conteos mensuales estimados por celda original de 1 km².
 8. «Sobre los datos», siempre accesible en el pie, explica la demostración y sus límites.
 
 La distancia de las rutas se muestra con tres decimales en km, a partir del valor enviado por la API. El acceso desde las coordenadas solicitadas hasta los nodos no está incluido. Se muestran las distancias de ajuste y los nodos ajustados como círculos; no se inventan tramos de acceso.
@@ -170,7 +174,7 @@ npm run audit:visual
 
 La instalación descarga Chromium en `.playwright-browsers/`, excluido de Git. Se puede omitir si ya está instalado; `PLAYWRIGHT_BROWSERS_PATH` permite usar otra ubicación existente. Las pruebas necesitan acceso a las teselas de OpenStreetMap y a la API local. No abren puertos, no arrancan servidores ni modifican el backend.
 
-Playwright ejecuta cuatro escenarios funcionales y uno de identidad en siete tamaños: **360×800, 390×844, 430×932, 768×1024, 1024×768, 1280×800 y 1920×1080**; son 35 pruebas en total. Comprueba selección de puntos, respuestas reales, resaltado de alternativas, capas, panel, desbordamiento, controles, redimensionado, advertencias, carga, errores, recuperación, nombre público y presentación científica. Las demoras y cortes de red son simulados; las distancias y el error de cobertura HTTP 422 proceden de FastAPI real.
+La suite Playwright del MVP ejecuta seis escenarios en siete tamaños, 42 pruebas en total. Comprueba selección de puntos, respuestas reales, resaltado de alternativas, capas, panel, desbordamiento, controles, redimensionado, advertencias, carga, errores, recuperación, identidad y cobertura. Los tamaños son **360×800, 390×844, 430×932, 768×1024, 1024×768, 1280×800 y 1920×1080**. Las distancias y el error de cobertura HTTP 422 proceden de FastAPI real. Con el backend ampliado, ejecuta el escenario específico mediante `npm run test:e2e -- e2e/cobertura.spec.ts`. Para apuntar Playwright a otro servidor local de pruebas, utiliza `PLAYWRIGHT_TEST_BASE_URL`. [Modos y resultados](../backend/COBERTURAS.md)
 
 `npm run audit:visual` guarda 49 PNG y mediciones DOM en `evidencias/auditoria-responsive/despues/`, esperando las fuentes y el fundido de las teselas. **Sobrescribe esa carpeta de evidencias** al repetirlo. La línea base `antes/` corresponde al código previo a las correcciones y debe conservarse. Las capturas requieren inspección visual; el script no interpreta su contenido.
 

@@ -6,8 +6,28 @@ from urllib.parse import urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
-GRAFO = ROOT / "red_vial" / "quito_demo_con_predicciones.graphml"
-PREDICCIONES = ROOT / "resultados" / "predicciones_demo_junio2026.geojson"
+COBERTURA = os.environ.get("RUTAINFORMADA_COBERTURA", "demo")
+if COBERTURA == "demo":
+    GRAFO = ROOT / "red_vial" / "quito_demo_con_predicciones.graphml"
+    PREDICCIONES = ROOT / "resultados" / "predicciones_demo_junio2026.geojson"
+    ZONA_DEMO = "Zona de demostración de Quito"
+elif COBERTURA == "ampliada":
+    GRAFO = ROOT / "red_vial" / "ampliacion" / "quito_peatonal_ampliada_con_predicciones.graphml"
+    PREDICCIONES = ROOT / "resultados" / "ampliacion" / "predicciones_99_celdas_junio2026.geojson"
+    ZONA_DEMO = "Zona ampliada · Quito"
+else:
+    raise ValueError(f"RUTAINFORMADA_COBERTURA={COBERTURA!r} no es válida. Use 'demo' o 'ampliada'.")
+
+# Selección al iniciar el proceso: el original se conserva para comparación.
+# El MVP usa la demo filtrada; cualquier original requiere selección explícita.
+RED = os.environ.get("RUTAINFORMADA_RED", "peatonal_filtrada")
+if RED not in ("original", "peatonal_filtrada"):
+    raise ValueError(f"RUTAINFORMADA_RED={RED!r} no es válida. Use 'original' o 'peatonal_filtrada'.")
+if RED == "peatonal_filtrada":
+    if COBERTURA != "demo":
+        raise ValueError("RUTAINFORMADA_RED='peatonal_filtrada' sólo está habilitada con RUTAINFORMADA_COBERTURA='demo'. Para auditar la ampliada experimental, indique RUTAINFORMADA_RED='original' explícitamente.")
+    GRAFO = ROOT / "red_vial" / "acceso_peatonal_v1" / "quito_demo_peatonal_filtrado.graphml"
+
 PROYECTO = "RutaInformada Quito"
 VERSION_API = "0.1.0"
 

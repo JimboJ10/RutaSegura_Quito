@@ -33,7 +33,11 @@ it('el cliente interpreta las 25 cuadrículas reales, en longitud-latitud', asyn
 });
 it('mantiene las tres distancias, indicadores, continuidad y límite del 15 %', async () => {
   const data = await client.routes(request.origen, request.destino, signal());
-  const references = { corta: 3.255669, historica: 3.306152, lightgbm: 3.297791 };
+  const filtered = (process.env.RUTAINFORMADA_RED ?? 'peatonal_filtrada') === 'peatonal_filtrada';
+  expect((await client.health(signal())).aristas).toBe(filtered ? 43248 : 44672);
+  const references = filtered
+    ? { corta: 3.255669, historica: 3.346387, lightgbm: 3.293076 }
+    : { corta: 3.255669, historica: 3.306152, lightgbm: 3.297791 };
   for (const route of data.features) {
     const p = route.properties;
     expect(Math.abs(p.distancia_km - references[p.id])).toBeLessThanOrEqual(0.001);

@@ -55,7 +55,7 @@ try {
       result.routePayload = response.request().postDataJSON();
       const data = await response.json();
       result.routeDistances = data.features?.map(f => f.properties);
-      await page.getByRole('heading', { name: 'Tres formas de llegar' }).waitFor();
+      await page.getByRole('heading', { name: 'Tres modalidades de comparación' }).waitFor();
       for (const name of ['Ruta más corta', 'Ruta histórica', 'Ruta LightGBM']) {
         await page.getByRole('button', { name: new RegExp(name) }).click();
         result.steps['seleccion-' + name] = await measure(page);

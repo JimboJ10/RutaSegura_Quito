@@ -12,6 +12,7 @@ from pyproj.exceptions import CRSError
 
 from config import ALPHAS, CRS_ESPERADO, GRAFO
 from geojson import partes_arista
+from datos_mvp import ROOT as DATOS_ROOT, RUTAS, verificar_archivo
 
 
 @lru_cache(maxsize=1)
@@ -22,6 +23,9 @@ def cargar_grafo(ruta=GRAFO):
         raise RuntimeError(f"No existe el grafo: {ruta}")
     if not ruta.is_file():
         raise RuntimeError(f"La ruta del grafo no es un archivo: {ruta}")
+
+    if ruta.resolve() == (DATOS_ROOT / RUTAS["grafo"]).resolve():
+        verificar_archivo("grafo")
 
     try:
         # Validar nosotros x/y permite identificar el nodo y atributo inválidos.

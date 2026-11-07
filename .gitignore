@@ -18,6 +18,7 @@
 datos_originales/
 red_vial/
 resultados/
+entregas/
 
 # Modelos y datos geoespaciales
 *.joblib

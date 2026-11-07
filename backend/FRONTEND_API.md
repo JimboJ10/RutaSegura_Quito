@@ -8,6 +8,8 @@ API experimental para React y Leaflet. Los ejemplos de datos siguientes se obtuv
 
 La instalación, arquitectura, archivos de datos y pruebas por Wi-Fi desde celulares se explican en [README.md](README.md). Este documento mantiene el contrato HTTP y la interpretación de sus datos.
 
+La [demo peatonal filtrada es el MVP predeterminado](MVP_FILTRADO.md). React mantiene los cuatro endpoints y las 25 cuadrículas, sin seleccionar archivos. `/config.advertencias` identifica el MVP y sus sectores desconectados. Se conservan HTTP 422 con `detail` legible, 300 m de ajuste y 15 % de desvío. Las tres modalidades pueden compartir geometría; no se anuncian como tres recorridos distintos. Los ejemplos siguientes reflejan la red filtrada; el informe de integración conserva la comparación con el original.
+
 La identidad pública es **RutaInformada Quito**. `proyecto` es un texto de presentación y ahora devuelve ese nombre en `/health` y `/config`; no cambia ninguna clave JSON ni endpoint. Los identificadores técnicos y las variables de entorno existentes se conservan.
 
 ## Inicio y configuración de acceso
@@ -33,6 +35,8 @@ La variable sustituye la lista local. Una cadena vacía deshabilita el acceso cr
 
 ## Endpoints
 
+Los ejemplos siguientes corresponden a `demo`. En el ensayo `ampliada`, `/health` publica los conteos de la red activa y `/config` publica su `zona_demo`, `bbox` y advertencias. Lee el número de celdas de `/predicciones` desde `features.length` (25 o 99). Las 99 propiedades conservan `periodo` del archivo e incluyen también `anio` y `mes` para el cliente. El rectángulo describe la capa predictiva. La disponibilidad de una ruta depende del ajuste a la red y la conectividad. [Resultados y revisión cartográfica](COBERTURAS.md)
+
 | Método y ruta | Entrada | Salida satisfactoria |
 |---|---|---|
 | GET `/health` | Sin cuerpo | Estado y tamaño del grafo, JSON |
@@ -48,8 +52,8 @@ Respuesta completa HTTP 200:
 {
   "estado": "ok",
   "proyecto": "RutaInformada Quito",
-  "nodos": 14934,
-  "aristas": 44672,
+  "nodos": 14686,
+  "aristas": 43248,
   "periodo": "2026-06"
 }
 ```
@@ -175,17 +179,17 @@ La respuesta es una FeatureCollection. Cada elemento de `features` contiene `typ
   },
   {
     "id": "historica",
-    "distancia_km": 3.3062,
-    "desvio_pct": 1.551,
-    "indice_historico": 9.3968,
-    "indice_lightgbm": 8.6266
+    "distancia_km": 3.3464,
+    "desvio_pct": 2.786,
+    "indice_historico": 9.5252,
+    "indice_lightgbm": 8.7394
   },
   {
     "id": "lightgbm",
-    "distancia_km": 3.2978,
-    "desvio_pct": 1.294,
-    "indice_historico": 9.6312,
-    "indice_lightgbm": 8.4705
+    "distancia_km": 3.2931,
+    "desvio_pct": 1.149,
+    "indice_historico": 9.6404,
+    "indice_lightgbm": 8.4724
   }
 ]
 ```
@@ -348,5 +352,5 @@ Desde `backend`:
 .\.venv\Scripts\python.exe -m pytest -v
 ```
 
-La regresión conserva 3,255669 km, 3,306152 km y 3,297791 km como referencias, con tolerancia de ±1 metro. Los datos originales, GraphML y resultados no se modifican al servir estos endpoints.
+La regresión conserva 3,255669 km, 3,346387 km y 3,293076 km como referencias, con tolerancia de ±1 metro. Los datos originales, GraphML y resultados no se modifican al servir estos endpoints.
 

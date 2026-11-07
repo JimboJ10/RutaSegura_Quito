@@ -61,7 +61,7 @@ export default function App() {
     </main> : <main className={`workspace ${expanded ? 'panel-expanded' : ''}`}>
       <aside id="journey-panel" className="journey-panel" aria-label="Planificación y resultados" tabIndex={-1}>
         <button className="panel-toggle" aria-label={expanded ? 'Contraer panel de rutas' : 'Expandir panel de rutas'} aria-expanded={expanded} aria-controls="panel-content" onClick={() => setExpanded(v => !v)}>
-          <span className="drawer-handle" /><span><strong>{planner.routes ? 'Tus tres alternativas' : 'Planea tu recorrido'}</strong><small>{planner.routes ? 'Compara distancias e indicadores' : 'Selecciona origen y destino en el mapa'}</small></span><Icon name="chevron" />
+          <span className="drawer-handle" /><span><strong>{planner.routes ? 'Tres modalidades' : 'Planea tu recorrido'}</strong><small>{planner.routes ? 'Compara distancias e indicadores' : 'Selecciona origen y destino en el mapa'}</small></span><Icon name="chevron" />
         </button>
         <div id="panel-content" className="panel-content">
           <Planner config={demo.config} points={planner.points} target={target}
@@ -74,7 +74,7 @@ export default function App() {
               planner.setPoint('destino', { lat: -0.184, lon: -78.486 });
               setTarget(null); center('zone');
             }} loading={planner.loading} error={planner.error} />
-          {planner.routes ? <div ref={resultsStart}><p className="sr-only" role="status">Tres alternativas disponibles. Selecciona una para comparar sus indicadores.</p><RouteResults routes={planner.routes} selected={selected} onSelect={setSelected} onFocus={() => { center('route'); setExpanded(false); }} /></div> :
+          {planner.routes ? <div ref={resultsStart}><p className="sr-only" role="status">Tres modalidades disponibles; sus recorridos pueden coincidir. Selecciona una para comparar sus indicadores.</p><RouteResults routes={planner.routes} selected={selected} onSelect={setSelected} onFocus={() => { center('route'); setExpanded(false); }} /></div> :
             <div className="empty-state"><span className="empty-icon"><Icon name="walk" /></span><strong>Decide tu camino con datos.</strong><p>{DESCRIPTION}</p></div>}
           <p className="panel-footnote"><Icon name="info" />Ajuste máximo a la red: {demo.config.distancia_maxima_ajuste_m} m. Sin cálculo de accesos peatonales.</p>
         </div>

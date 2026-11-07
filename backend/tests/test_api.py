@@ -5,6 +5,7 @@ import math
 
 import pytest
 from shapely.geometry import shape
+from config import RED
 
 
 RUTAS = ("corta", "historica", "lightgbm")
@@ -17,8 +18,8 @@ def test_health_responde_200_con_el_grafo_demo(cliente):
     assert respuesta.json() == {
         "estado": "ok",
         "proyecto": "RutaInformada Quito",
-        "nodos": 14934,
-        "aristas": 44672,
+        "nodos": 14686 if RED == "peatonal_filtrada" else 14934,
+        "aristas": 43248 if RED == "peatonal_filtrada" else 44672,
         "periodo": "2026-06",
     }
 

@@ -37,6 +37,11 @@ it('permite activar polígonos GeoJSON y cambiar el indicador de la leyenda', ()
   fireEvent.click(screen.getByRole('checkbox', { name: 'Mostrar 1 cuadrículas' }));
   expect(screen.queryByText('Histórico · siniestros estimados / mes')).toBeNull();
 });
+it('identifica la zona publicada por el backend ampliado', () => {
+  render(<MapView {...props()} config={{ ...config, zona_demo: 'Zona ampliada · Quito' }} />);
+  expect(screen.getByText('Zona ampliada · Quito')).toBeTruthy();
+  expect(screen.queryByText('Zona demo · Quito')).toBeNull();
+});
 it('ofrece un reintento de capa sin sustituir predicciones por ceros', () => {
   const input = props();
   render(<MapView {...input} predictions={null} predictionError="Las predicciones no están disponibles." />);

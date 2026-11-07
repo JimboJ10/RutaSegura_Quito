@@ -14,11 +14,17 @@ Este README cubre instalación, operación y pruebas. [FRONTEND_API.md](FRONTEND
 
 ## Arquitectura y archivos
 
+El MVP inicia con **`RUTAINFORMADA_COBERTURA=demo` y `RUTAINFORMADA_RED=peatonal_filtrada`** cuando no existen esas variables. Conserva las 25 cuadrículas, todas las componentes y las fórmulas. Las selecciones originales requieren `RUTAINFORMADA_RED=original` explícito y se reservan para auditoría. Para la ampliada experimental deben indicarse ambas variables: `ampliada` + `original`; `ampliada` sin red explícita se rechaza.
+
+No hay fallback a originales. Un GraphML filtrado ausente, de otra versión o con hash incorrecto impide el arranque. [Datos necesarios, entrega reproducible, pruebas y comandos del MVP](MVP_FILTRADO.md). El [informe de integración anterior](INTEGRACION_DEMO_FILTRADA.md) conserva la evidencia del ensayo previo al cambio de valores predeterminados.
+
 ```text
 RutaSegura_Quito/
 ├── backend/
 │   ├── main.py                  # FastAPI, ciclo de vida, CORS y errores
 │   ├── config.py                # Rutas de datos, constantes y orígenes CORS
+│   ├── datos_mvp.py             # Verificación de versión, tamaño y SHA-256
+│   ├── datos_mvp.manifest.json   # Identidad de los datos del MVP
 │   ├── grafo.py                 # Carga, validación y preparación del grafo
 │   ├── schemas.py               # Validación Pydantic de las coordenadas
 │   ├── rutas.py                 # Algoritmo y evaluación de recorridos
@@ -39,8 +45,8 @@ RutaSegura_Quito/
 │       ├── test_regresion.py
 │       └── unit/                # Grafos pequeños y archivos temporales
 ├── red_vial/                    # Excluida de Git
-│   ├── quito_demo_con_predicciones.graphml
-│   └── quito_demo_peatonal.graphml
+│   ├── acceso_peatonal_v1/quito_demo_peatonal_filtrado.graphml
+│   └── quito_demo_con_predicciones.graphml  # Sólo auditoría
 ├── resultados/                 # Excluida de Git
 │   └── predicciones_demo_junio2026.geojson
 └── datos_originales/            # Excluida de Git
@@ -93,34 +99,22 @@ Opcionalmente activa el entorno con `.\.venv\Scripts\Activate.ps1`. Si PowerShel
 
 ## Archivos de datos que no están en Git
 
-Una clonación del repositorio no incluye los datos. Obtén los archivos del **respaldo validado del equipo** o de su responsable y colócalos sin cambiar sus nombres:
+Una clonación no incluye los dos datos obligatorios:
 
 | Archivo relativo a la raíz | Necesidad |
 |---|---|
-| `red_vial/quito_demo_con_predicciones.graphml` | Obligatorio para iniciar y calcular rutas |
-| `resultados/predicciones_demo_junio2026.geojson` | Obligatorio para servir `/config` y `/predicciones` |
-| `red_vial/quito_demo_peatonal.graphml` | Respaldo de la red original; no lo carga la API actual |
+| `red_vial/acceso_peatonal_v1/quito_demo_peatonal_filtrado.graphml` | Arranque y rutas del MVP |
+| `resultados/predicciones_demo_junio2026.geojson` | `/config` y `/predicciones`, 25 cuadrículas |
 
-No hay un enlace público de descarga definido en este repositorio. Solicita la versión de la demostración de junio de 2026; no la sustituyas por una descarga reciente de OpenStreetMap ni por nuevas predicciones. Conserva los archivos existentes y no los sobrescribas si ya están presentes. Los datos originales, métricas y modelos pueden permanecer en sus carpetas, pero no se necesitan para ejecutar los endpoints actuales.
+El manifiesto `backend/datos_mvp.manifest.json` y su verificador sí deben viajar con el código. La entrega **`demo-peatonal-v1-2026-11-04`** contiene los dos datos y una copia del manifiesto. [Procedimiento de preparación, transferencia y recepción](MVP_FILTRADO.md#entrega-a-otro-integrante). No requiere GraphML originales, modelos `.joblib`, datasets históricos ni descargas de calles para ejecutar el MVP. Las pruebas completas de auditoría sí requieren archivos adicionales; se distinguen de la ejecución del producto.
 
-Compara los SHA-256 del respaldo antes de usarlo. Desde `backend`:
+Desde la raíz, antes de arrancar:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 -LiteralPath '..\red_vial\quito_demo_con_predicciones.graphml'
-Get-FileHash -Algorithm SHA256 -LiteralPath '..\resultados\predicciones_demo_junio2026.geojson'
+.\backend\.venv\Scripts\python.exe scripts/distribuir_mvp.py verificar
 ```
 
-Valores de referencia de los archivos usados en la regresión:
-
-```text
-quito_demo_con_predicciones.graphml
-73402173e4fc22f27555f4270bb22a6d766118fa0d3c830614c0e6a79258409c
-
-predicciones_demo_junio2026.geojson
-1a3fef11f33ddcd5b2720b69b3ff0ccc5d4d2719d6e4fb11e862defee353a2d0
-```
-
-Un hash distinto requiere revisar qué versión se recibió; no se debe cambiar la referencia de las pruebas para aceptar otro resultado. Las carpetas de datos están excluidas mediante `.gitignore`. Su distribución pública requiere revisar su procedencia, licencia y estrategia de entrega; esta fase no publica archivos.
+El verificador comprueba existencia, versión, ruta, tamaño y SHA-256 contra el manifiesto del código. Los cargadores también verifican los archivos del MVP antes de leerlos y conservan sus validaciones estructurales. No cambies el hash para aceptar un archivo diferente. Reinicia tras restaurar los datos: los recursos válidos se conservan en memoria por proceso.
 
 ## Ejecución local y Swagger
 
@@ -149,7 +143,7 @@ La escucha predeterminada es local. `--reload` es para desarrollo. Si falta el G
 |---|---|---|
 | GET | `/health` | Estado del grafo, número de nodos/aristas y periodo |
 | GET | `/config` | Métodos, restricciones, bbox y advertencias públicas |
-| GET | `/predicciones` | GeoJSON completo con las 25 cuadrículas |
+| GET | `/predicciones` | GeoJSON de la zona activa, 25 cuadrículas en demo o 99 en ampliada |
 | POST | `/rutas` | Tres modalidades, geometrías, indicadores y ajustes |
 
 Con el servidor activo, abre otra terminal:
@@ -180,8 +174,8 @@ Respuesta completa de `/health`:
 {
   "estado": "ok",
   "proyecto": "RutaInformada Quito",
-  "nodos": 14934,
-  "aristas": 44672,
+  "nodos": 14686,
+  "aristas": 43248,
   "periodo": "2026-06"
 }
 ```
@@ -217,8 +211,8 @@ Extracto real de `/config`:
 | id | distancia_km | desvio_pct | indice_historico | indice_lightgbm |
 |---|---:|---:|---:|---:|
 | corta | 3.2557 | 0.000 | 9.7757 | 8.5263 |
-| historica | 3.3062 | 1.551 | 9.3968 | 8.6266 |
-| lightgbm | 3.2978 | 1.294 | 9.6312 | 8.4705 |
+| historica | 3.3464 | 2.786 | 9.5252 | 8.7394 |
+| lightgbm | 3.2931 | 1.149 | 9.6404 | 8.4724 |
 
 Los ajustes del ejemplo son **104,7 m en origen y 76,2 m en destino**. Son distancias geográficas a los nodos, no itinerarios de acceso. Las distancias mostradas y el límite del 15 % excluyen esos accesos.
 
@@ -235,13 +229,9 @@ Desde `backend`, en una consola con los orígenes CORS locales predeterminados:
 .\.venv\Scripts\python.exe -m pip check
 ```
 
-La suite contiene **222 casos**: integración con el GraphML real, regresión, carga única, grafos sintéticos, geometrías, validaciones, errores, CORS y predicciones. Las pruebas de archivos ausentes/corruptos utilizan datos temporales.
+La suite completa también incluye auditorías históricas que necesitan datos ajenos al paquete mínimo del MVP. Para comprobar una entrega mínima basta con los módulos `tests/test_api.py`, `tests/test_regresion.py` y `tests/test_frontend_api.py`. El [informe del MVP](MVP_FILTRADO.md) registra las pruebas afectadas ejecutadas en esta fase; no se repitieron suites completas sin cambios.
 
-Verificación de cierre de la Fase 5: **222 aprobadas, 0 fallidas**, en 21,79 s. Uvicorn inició y se detuvo correctamente en escucha local; los cuatro endpoints y Swagger respondieron HTTP 200. Se comprobaron las 25 cuadrículas y los diez ejemplos JSON de ambos documentos contra respuestas reales. Si configuraste CORS para el teléfono, utiliza otra consola con los valores predeterminados para ejecutar la suite.
-
-Referencias de distancia: **3.255669, 3.306152 y 3.297791 km**, con tolerancia absoluta de **±1 metro**. No se deben ajustar para hacer pasar un cambio. La API mantiene su redondeo a cuatro decimales.
-
-Existe un aviso de deprecación de Starlette por el cliente `httpx`; no hace fallar la suite. La compatibilidad está comprobada con las versiones fijadas. Una actualización del cliente requiere verificar de nuevo las pruebas.
+Referencias filtradas: **3.255669, 3.346387 y 3.293076 km**, tolerancia absoluta de **±1 metro**. Las referencias originales permanecen separadas para auditoría explícita. No se ajustan automáticamente según los resultados obtenidos. La API conserva su redondeo a cuatro decimales.
 
 ## CORS
 
@@ -277,7 +267,7 @@ $env:RUTASEGURA_CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http
 
 Usa esta escucha solo durante pruebas en la red local. No configures reenvío de puertos del router, túneles ni exposición a internet. Al terminar, detén el servidor y vuelve al comando predeterminado de escucha local.
 
-### 3. Preparar el futuro frontend Vite
+### 3. Preparar el frontend Vite
 
 En `frontend`, utiliza `.env.local` en la raíz de Vite. Para probar solo desde la computadora:
 
@@ -320,7 +310,7 @@ Para esta demo HTTP local, sirve frontend y API por HTTP. Una página HTTPS que 
 
 ### 5. Comprobación manual pendiente en dispositivos
 
-Todavía no se ha probado físicamente un frontend en Android o iPhone. Cuando exista:
+Todavía no se ha probado físicamente el frontend en Android o iPhone. Para esa prueba:
 
 1. Abrir `/health` desde el teléfono y después la interfaz Vite.
 2. Verificar las 25 cuadrículas, el periodo y las advertencias.

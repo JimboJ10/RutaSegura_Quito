@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from config import CORS_ORIGINS, CRS_ESPERADO, DESVIO_MAX, MAX_AJUSTE_M, PERIODO, PROYECTO, VERSION_API
+from config import COBERTURA, CORS_ORIGINS, CRS_ESPERADO, DESVIO_MAX, MAX_AJUSTE_M, PERIODO, PROYECTO, RED, VERSION_API, ZONA_DEMO
 from geojson import coleccion_geojson
 from predicciones import PrediccionesNoDisponibles, cargar_predicciones
 from rutas import calcular_recorridos
@@ -92,10 +92,29 @@ def predicciones():
 )
 def configuracion_publica():
     _, bbox = obtener_predicciones()
+    advertencias = [
+        "Predicciones de junio de 2026: demostración retrospectiva, no en tiempo real.",
+        "Los indicadores no representan probabilidades individuales de accidente ni garantizan mayor seguridad.",
+        "Las cuadrículas muestran conteos mensuales estimados por celda de 1 km²; el recorte visual no prorratea esos conteos.",
+        "Las distancias y el desvío se calculan entre nodos ajustados y excluyen el acceso desde las coordenadas solicitadas.",
+    ]
+    if RED == "peatonal_filtrada":
+        advertencias.append(
+            "MVP de la demo peatonal filtrada: excluye restricciones e incertidumbres de acceso documentadas. "
+            "Hay sectores desconectados; no se garantiza la transitabilidad física ni el acceso hasta los nodos."
+        )
+    if COBERTURA == "ampliada":
+        advertencias.append(
+            "Cobertura ampliada experimental. Dentro del rectángulo hay puntos a más de 300 m de la red peatonal."
+        )
+        advertencias.append(
+            "Algunas alternativas incluyen vías con acceso restringido en OpenStreetMap. "
+            "Compruebe el acceso peatonal antes de seguir el recorrido."
+        )
     return {
         "proyecto": PROYECTO,
         "version_api": VERSION_API,
-        "zona_demo": "Zona de demostración de Quito",
+        "zona_demo": ZONA_DEMO,
         "bbox": bbox,
         "periodo": PERIODO,
         "tipo": "demostracion_retrospectiva",
@@ -103,12 +122,7 @@ def configuracion_publica():
         "desvio_maximo_pct": int(DESVIO_MAX * 100),
         "distancia_maxima_ajuste_m": MAX_AJUSTE_M,
         "crs": CRS_ESPERADO,
-        "advertencias": [
-            "Predicciones de junio de 2026: demostración retrospectiva, no en tiempo real.",
-            "Los indicadores no representan probabilidades individuales de accidente ni garantizan mayor seguridad.",
-            "Las cuadrículas muestran conteos mensuales estimados por celda de 1 km²; el recorte visual no prorratea esos conteos.",
-            "Las distancias y el desvío se calculan entre nodos ajustados y excluyen el acceso desde las coordenadas solicitadas.",
-        ],
+        "advertencias": advertencias,
     }
 
 

@@ -6,7 +6,8 @@ export function RouteResults({ routes, selected, onSelect, onFocus }: {
   routes: Routes; selected: RouteId; onSelect: (id: RouteId) => void; onFocus: () => void;
 }) {
   return <section className="results" aria-labelledby="results-title">
-    <div className="section-heading"><div><p className="eyebrow">COMPARA Y ELIGE</p><h2 id="results-title">Tres formas de llegar</h2></div><span className="count-badge">3</span></div>
+    <div className="section-heading"><div><p className="eyebrow">COMPARA Y ELIGE</p><h2 id="results-title">Tres modalidades de comparación</h2></div><span className="count-badge">3</span></div>
+    <p className="muted fine-print">Las modalidades pueden compartir el mismo recorrido.</p>
     <div className="route-options" aria-label="Alternativas de recorrido">
       {routes.features.map(({ properties: route }) => {
         const meta = ROUTE_META[route.id];
