@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import error_interno, error_validacion, router
+from api import error_interno, error_validacion, router, router_experimental
 from config import CORS_ORIGINS, PROYECTO, VERSION_API
 from grafo import cargar_grafo
 from robos_historicos import router as robos_router
@@ -39,3 +39,4 @@ app.add_middleware(
 )
 app.include_router(router)
 app.include_router(robos_router)
+app.include_router(router_experimental)

@@ -1,6 +1,11 @@
 import type { Feature, FeatureCollection, MultiLineString, Polygon } from 'geojson';
 
-export type RouteId = 'corta' | 'historica' | 'lightgbm';
+export type BaseRouteId = 'corta' | 'historica' | 'lightgbm';
+export type RouteId = BaseRouteId | 'robos';
+export type TheftComparison = {
+  periodo: '2019-2022'; altas_corta_m: number; altas_m: number;
+  ponderado_corta: number; ponderado: number;
+};
 export type Point = { lat: number; lon: number };
 export type Endpoint = 'origen' | 'destino';
 export type Points = Record<Endpoint, Point | null>;
@@ -21,6 +26,7 @@ export type PredictionField = 'pred_historico' | 'pred_lightgbm_v2';
 export type RouteProperties = {
   id: RouteId; distancia_km: number; desvio_pct: number;
   indice_historico: number; indice_lightgbm: number;
+  comparacion_robos?: TheftComparison;
 };
 export type RouteFeature = Feature<MultiLineString, RouteProperties>;
 export type AdjustedPoint = Point & { distancia_ajuste_m: number };
@@ -34,6 +40,7 @@ export const ROUTE_META: Record<RouteId, { name: string; short: string; color: s
   corta: { name: 'Más corta', short: 'Más corta', color: '#175b4b', symbol: '01' },
   historica: { name: 'Menor concentración histórica de siniestros', short: 'Siniestros históricos', color: '#955018', symbol: '02', dash: '10 5' },
   lightgbm: { name: 'Con estimación de IA', short: 'Con IA', color: '#6554ac', symbol: '03', dash: '3 6' },
+  robos: { name: 'Menor concentración histórica de robos', short: 'Robos históricos', color: '#156181', symbol: '04', dash: '12 3 3 3' },
 };
 export const format = (value: number, digits = 2) => new Intl.NumberFormat('es-EC', {
   minimumFractionDigits: digits, maximumFractionDigits: digits,

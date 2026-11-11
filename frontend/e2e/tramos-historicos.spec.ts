@@ -53,7 +53,7 @@ test('el contorno y la tarjeta siguen la modalidad activa', async ({page}, info)
 
 test('modalidad sin intersección no dibuja contornos', async ({page})=>{
   await page.route('**/robos-historicos/cruces?*',r=>r.fulfill({json:Object.fromEntries(
-    ['corta','historica','lightgbm'].map(id=>[id,{zonas:[],tramos:[]}]))}));
+    ['corta','historica','lightgbm','robos'].map(id=>[id,{zonas:[],tramos:[]}]))}));
   await page.goto('/');
   await expect(page.locator('.panel-toggle')).toBeVisible();
   await expandPanel(page);
@@ -62,5 +62,5 @@ test('modalidad sin intersección no dibuja contornos', async ({page})=>{
   await expect(page.locator('.theft-summary')).toContainText('no atraviesa zonas');
   await expect(page.getByLabel('Resaltar tramos en el mapa')).toHaveCount(0);
   await expect(page.locator('.leaflet-historical-segments-pane path')).toHaveCount(0);
-  await expect(page.locator('.route-line')).toHaveCount(3);
+  await expect(page.locator('.route-line:not(.route-robos)')).toHaveCount(3);
 });

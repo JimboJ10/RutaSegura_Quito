@@ -354,3 +354,36 @@ Desde `backend`:
 
 La regresión conserva 3,255669 km, 3,346387 km y 3,293076 km como referencias, con tolerancia de ±1 metro. Los datos originales, GraphML y resultados no se modifican al servir estos endpoints.
 
+## Comparación experimental de robos históricos
+
+En la demo peatonal filtrada, React presenta primero las tres modalidades de `POST /rutas`. Para evaluar una cuarta, envía el mismo cuerpo con `origen` y `destino` a `POST /robos-historicos/alternativa`. Ambos endpoints usan el mismo ajuste de hasta 300 m. El contrato de `/rutas` y la lista de métodos base de `/config` se conservan.
+
+| Respuesta | Interpretación |
+|---|---|
+| 200, `estado=disponible` | `feature` contiene una MultiLineString con `properties.id=robos`, las propiedades habituales y `comparacion_robos`. Se habilita la tarjeta experimental. |
+| 200, `estado=coincidente` | `modalidad` identifica el trazado existente que ya cumple el criterio. Se muestra una explicación. |
+| 200, `estado=sin_alternativa` | Ninguna candidata evaluada superó todos los filtros. |
+| 422 | Extremos inválidos, ajuste excesivo, mismo nodo o falta de conexión. |
+| 503 | Comparación no disponible en esa red o con esos datos. Las modalidades base pueden consultarse por separado. |
+
+La preparación espacial se comparte en memoria por proceso para la misma red y versión local del archivo. Se recortan las geometrías de las aristas contra el interior de cada cuadrícula y se miden en metros en UTM 17S. Las fronteras y el exterior quedan en una categoría sin datos. Otra categoría separada conserva los metros de cada celda sin densidad publicada.
+
+Se prueban los dos costes del experimento con las siete penalizaciones originales. Uno penaliza metros en las cinco zonas altas y metros desconocidos. El otro penaliza densidad ponderada por longitud y utiliza la máxima densidad publicada como penalización de búsqueda para lo desconocido. Cada candidata debe cumplir conjuntamente estos criterios frente a la más corta entre los mismos nodos:
+
+- Desvío de hasta el 15 % y uso exclusivo de aristas del grafo filtrado.
+- Reducción de al menos 10 m **y** del 2 % en las cinco zonas altas.
+- Reducción de al menos el 2 % en el índice ponderado sobre densidades publicadas.
+- Ningún aumento en cada categoría sin datos, con tolerancia numérica de una millonésima de metro.
+
+Estos mínimos operativos evitan presentar diferencias diminutas como un beneficio. No son umbrales de significación estadística. Entre las candidatas aceptables se minimizan por orden los metros en las zonas altas, el índice ponderado y la distancia. Se compara la geometría resultante con las tres existentes. La búsqueda por penalizaciones puede omitir caminos factibles.
+
+`comparacion_robos` incluye `periodo` (2019–2022), `altas_m` y `altas_corta_m` en metros, y `ponderado` y `ponderado_corta` como suma de kilómetros por densidad publicada (registros/km). El desvío y los índices de siniestros conservan sus unidades habituales. Los registros agregados dependen de la cobertura y del registro de denuncias. No miden la probabilidad personal de victimización ni predicen delitos.
+
+La consulta de cruces acepta también el identificador `robos`. Guardar un recorrido es voluntario. El registro local v2 admite tres o cuatro modalidades y conserva la comparación para consultarla sin conexión. Las copias v1 de tres modalidades siguen siendo legibles. El cálculo de una alternativa nueva requiere FastAPI. La precaché de la PWA contiene solo los recursos de la interfaz. La capa histórica y sus derivados permanecen fuera del paquete público mientras se verifican los permisos.
+
+Para reproducir localmente la comparación de los umbrales con los insumos del informe, desde la raíz:
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\verificar_modalidad_robos.py
+```
+

@@ -40,6 +40,7 @@ it('mantiene las tres distancias, indicadores, continuidad y límite del 15 %', 
     : { corta: 3.255669, historica: 3.306152, lightgbm: 3.297791 };
   for (const route of data.features) {
     const p = route.properties;
+    if (p.id === 'robos') throw new Error('La cuarta modalidad tiene un endpoint independiente.');
     expect(Math.abs(p.distancia_km - references[p.id])).toBeLessThanOrEqual(0.001);
     expect(p.desvio_pct).toBeLessThanOrEqual(15);
     expect(p.indice_historico).toBeGreaterThanOrEqual(0);

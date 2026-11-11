@@ -6,6 +6,7 @@ import { deleteTrip, listSaved, saveTrip, storageMessage } from '../savedTrips';
 import type { SavedTrip } from '../savedTrips';
 import { format, periodLabel, ROUTE_META } from '../types';
 import type { Points, RouteId, Routes } from '../types';
+import { TheftMetrics } from './RouteResults';
 
 export function SaveTripButton({ points, routes }: { points: Points; routes: Routes }) {
   const [state, setState] = useState<'idle' | 'saving' | 'done'>('idle');
@@ -16,7 +17,7 @@ export function SaveTripButton({ points, routes }: { points: Points; routes: Rou
     setState('saving'); setError('');
     try {
       const id = globalThis.crypto?.randomUUID?.() ?? Array.from(crypto.getRandomValues(new Uint32Array(4))).join('-');
-      await saveTrip({version: 1, id, savedAt: new Date().toISOString(),
+      await saveTrip({version: 2, id, savedAt: new Date().toISOString(),
         points: {origen: points.origen, destino: points.destino}, routes});
       setState('done');
     } catch (e) { setError(storageMessage(e)); setState('idle'); }
@@ -40,6 +41,7 @@ function SavedDetail({trip}: {trip: SavedTrip}) {
       <GeoJSON key={selected} data={f} style={{color: ROUTE_META[selected].color, weight:5, dashArray: ROUTE_META[selected].dash}}/>
     </MapContainer>
     <p>Trazado guardado entre nodos ajustados · {ROUTE_META[selected].name}</p>
+    {f.properties.comparacion_robos && <TheftMetrics data={f.properties.comparacion_robos}/>}
     <p>Desvío {format(f.properties.desvio_pct)} % · Índice histórico {format(f.properties.indice_historico,4)} · Índice LightGBM {format(f.properties.indice_lightgbm,4)}</p>
     <p>Los índices miden concentración estimada ponderada por longitud. Las modalidades pueden compartir el mismo trazado.</p>
     <p>{trip.routes.metadata.advertencia}</p></article>;

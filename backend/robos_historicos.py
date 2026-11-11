@@ -18,7 +18,7 @@ NIVELES = {ALTA, "concentracion_historica_intermedia", "menor_concentracion_hist
 router = APIRouter(prefix="/robos-historicos")
 Punto = tuple[Annotated[FiniteFloat, Field(ge=-180, le=180)], Annotated[FiniteFloat, Field(ge=-90, le=90)]]
 Linea = Annotated[list[Punto], Field(min_length=2)]
-Modalidad = Literal["corta", "historica", "lightgbm"]
+Modalidad = Literal["corta", "historica", "lightgbm", "robos"]
 
 
 def leer_capa():

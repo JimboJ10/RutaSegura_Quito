@@ -51,7 +51,10 @@ function MapBehavior({ target, onPoint, focus, config, route, segments, predicti
 function RouteLayer({ route, selected, selectable, onSelect }: { route: RouteFeature; selected: boolean; selectable: boolean; onSelect: (id: RouteId) => void }) {
   const layer = useRef<L.GeoJSON>(null);
   const meta = ROUTE_META[route.properties.id];
-  useEffect(() => { if (selected) layer.current?.bringToFront(); }, [selected]);
+  useEffect(() => {
+    if (selected) layer.current?.bringToFront();
+    else layer.current?.bringToBack();
+  }, [selected]);
   const options: L.PolylineOptions = {className: `route-line route-${route.properties.id}`, color: meta.color,
     smoothFactor: 0, weight: selected ? 7 : 4, opacity: selected ? 1 : 0.22, dashArray: meta.dash};
   return <GeoJSON ref={layer} data={route} pane="route-lines" style={options}

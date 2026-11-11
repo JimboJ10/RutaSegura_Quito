@@ -1,6 +1,10 @@
-import type { ApiConfig, Health, Point, Predictions, Routes } from './types';
+import type { ApiConfig, BaseRouteId, Health, Point, Predictions, RouteFeature, Routes } from './types';
 
 import type { TheftGrid, Crossings } from './thefts';
+
+type Alternative = { estado: 'disponible'; feature: RouteFeature }
+  | { estado: 'coincidente'; modalidad: BaseRouteId } | { estado: 'sin_alternativa' };
+const baseIds = ['corta', 'historica', 'lightgbm'];
 
 export class ApiError extends Error {
   constructor(message: string, public status?: number) { super(message); this.name = 'ApiError'; }
@@ -48,6 +52,12 @@ export function createApi(baseUrl: string | undefined) {
     }
   }
   return {
+    alternative: async (origen: Point, destino: Point, signal: AbortSignal) => {
+      const data = await request<Alternative>('/robos-historicos/alternativa', signal, { origen, destino });
+      if (data.estado === 'sin_alternativa' || (data.estado === 'coincidente' && baseIds.includes(data.modalidad)) ||
+          (data.estado === 'disponible' && validFeature(data.feature) && validAlternative(data.feature))) return data;
+      throw new ApiError('Respuesta experimental inválida.');
+    },
     thefts: (signal: AbortSignal) => request<TheftGrid>('/robos-historicos', signal),
     theftCrossings: (routes: Routes, signal: AbortSignal) => request<Crossings>('/robos-historicos/cruces?detalle=true', signal,
       Object.fromEntries(routes.features.map(f => [f.properties.id, f.geometry.coordinates]))),
@@ -78,15 +88,26 @@ export function createApi(baseUrl: string | undefined) {
     },
   };
 }
-export function validRoutes(value: unknown): value is Routes {
+function validAlternative(f: RouteFeature) {
+  const p = f.properties.comparacion_robos;
+  return f.properties.id === 'robos' && f.properties.desvio_pct <= 15 && p?.periodo === '2019-2022' &&
+    [p.altas_m, p.altas_corta_m, p.ponderado, p.ponderado_corta].every(nonnegative) &&
+    p.altas_m < p.altas_corta_m && p.ponderado < p.ponderado_corta;
+}
+function validFeature(f: RouteFeature) {
+  return f?.type === 'Feature' && !!f.properties && f.geometry?.type === 'MultiLineString' &&
+    validPositions(f.geometry.coordinates, 2) &&
+    [f.properties.distancia_km, f.properties.desvio_pct, f.properties.indice_historico, f.properties.indice_lightgbm].every(nonnegative);
+}
+export function validRoutes(value: unknown, allowAlternative = false): value is Routes {
   const data = value as Routes;
-  if (!data || data.type !== 'FeatureCollection' || !Array.isArray(data.features) || data.features.length !== 3)
+  if (!data || data.type !== 'FeatureCollection' || !Array.isArray(data.features) ||
+      !(data.features.length === 3 || (allowAlternative && data.features.length === 4)))
     return false;
-  const featuresValid = data.features.every(f => f?.type === 'Feature' &&
-    ['corta', 'historica', 'lightgbm'].includes(f.properties?.id) &&
-    f.geometry?.type === 'MultiLineString' && validPositions(f.geometry.coordinates, 2) &&
-    [f.properties.distancia_km, f.properties.desvio_pct, f.properties.indice_historico, f.properties.indice_lightgbm].every(nonnegative));
-  if (!featuresValid || new Set(data.features.map(f => f.properties.id)).size !== 3) return false;
+  if (!data.features.every(f => validFeature(f) && (baseIds.includes(f.properties.id) ||
+      (allowAlternative && validAlternative(f))))) return false;
+  const ids = new Set<string>(data.features.map(f => f.properties.id));
+  if (ids.size !== data.features.length || !baseIds.every(id => ids.has(id))) return false;
   const meta = data.metadata;
   return !!meta && typeof meta.periodo === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(meta.periodo)
     && typeof meta.tipo === 'string' && typeof meta.advertencia === 'string' && nonnegative(meta.desvio_maximo_pct)

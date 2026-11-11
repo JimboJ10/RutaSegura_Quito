@@ -1559,3 +1559,4 @@ select {
 .route-legend i { border-top-style:solid; }
 .mode-picker .mode-button.selected { background:color-mix(in srgb,var(--route-color) 8%, white); }
 .history-zoom { display:block; min-height:44px; padding:4px 0; background:transparent; color:#69303a; text-decoration:underline; font-weight:650; }
+.mode-picker.four-modes { grid-template-columns: repeat(2, minmax(0, 1fr)); }

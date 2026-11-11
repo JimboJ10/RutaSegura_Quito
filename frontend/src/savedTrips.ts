@@ -3,14 +3,14 @@ import { pointError } from './types';
 import type { Point, Routes } from './types';
 
 export type SavedTrip = {
-  version: 1; id: string; savedAt: string;
+  version: 1 | 2; id: string; savedAt: string;
   points: { origen: Point; destino: Point }; routes: Routes;
 };
 export function isSavedTrip(value: unknown): value is SavedTrip {
   const row = value as SavedTrip | null;
-  return !!row && row.version === 1 && typeof row.id === 'string' && !!row.id &&
+  return !!row && (row.version === 1 || row.version === 2) && typeof row.id === 'string' && !!row.id &&
     typeof row.savedAt === 'string' && Number.isFinite(Date.parse(row.savedAt)) &&
-    !!row.points && !pointError(row.points) && validRoutes(row.routes);
+    !!row.points && !pointError(row.points) && validRoutes(row.routes, row.version === 2);
 }
 
 async function openDB(): Promise<IDBDatabase> {

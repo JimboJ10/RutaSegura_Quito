@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import App from '../App';
 import { api } from '../api';
@@ -12,8 +12,24 @@ beforeEach(() => {
   vi.spyOn(api, 'config').mockResolvedValue(config);
   vi.spyOn(api, 'predictions').mockResolvedValue(predictions);
   vi.spyOn(api, 'routes').mockResolvedValue(routes);
+  vi.spyOn(api, 'alternative').mockResolvedValue({estado:'sin_alternativa'});
 });
 afterEach(cleanup);
+it('descarta la respuesta experimental si se cambia el recorrido durante la consulta', async () => {
+  let terminar!: () => void;
+  vi.mocked(api.alternative).mockImplementationOnce(() => new Promise(resolve => {
+    terminar = () => resolve({estado:'coincidente', modalidad:'historica'});
+  }));
+  render(<App />);
+  fireEvent.click(await screen.findByRole('button', {name:'Probar recorrido de ejemplo'}));
+  fireEvent.click(screen.getByRole('button', {name:'Comparar recorridos'}));
+  await waitFor(() => expect(api.alternative).toHaveBeenCalledOnce());
+  const signal = vi.mocked(api.alternative).mock.calls[0][2];
+  fireEvent.click(screen.getByRole('button', {name:'Restablecer'}));
+  expect(signal.aborted).toBe(true);
+  await act(async () => terminar());
+  expect(screen.queryByText(/ya cumple el criterio/)).toBeNull();
+});
 it('deshabilita comparar antes de tener ambos puntos', async () => {
   render(<App />);
   const button = await screen.findByRole('button', { name: 'Comparar recorridos' });

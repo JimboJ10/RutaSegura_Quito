@@ -3,6 +3,6 @@ uvicorn[standard]
 osmnx==2.1.1
 networkx
 numpy
-shapely
+shapely>=2.1
 scikit-learn
 pyproj

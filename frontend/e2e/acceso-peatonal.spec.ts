@@ -30,7 +30,7 @@ test('Candidato peatonal: rutas reales, capa, selección móvil y rechazo de aju
     const lineas = feature.geometry.coordinates;
     for (let j = 1; j < lineas.length; j++) expect(lineas[j - 1].at(-1)).toEqual(lineas[j][0]);
   }
-  await expect(page.locator('.route-card')).toHaveCount(3);
+  await expect(page.locator('.route-card:not([data-modalidad="robos"])')).toHaveCount(3);
   for (const [id, label] of [['corta', /Más corta/], ['historica', /Menor concentración histórica de siniestros/], ['lightgbm', /Con estimación de IA/]] as const) {
     await page.getByRole('button', { name: label }).click();
     await expect(page.locator(`.route-${id}`)).toHaveAttribute('stroke-width', '7');

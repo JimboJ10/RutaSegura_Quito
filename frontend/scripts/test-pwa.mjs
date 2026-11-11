@@ -52,10 +52,15 @@ async function calculate(page) {
   if (await toggle.getAttribute('aria-expanded')==='false') await toggle.click();
   await page.getByRole('button',{name:'Probar recorrido de ejemplo'}).click();
   const res = page.waitForResponse(r=>r.url().endsWith('/rutas') && r.request().method()==='POST');
+  const experimental = page.waitForResponse(r=>r.url().endsWith('/robos-historicos/alternativa'));
   await page.getByRole('button',{name:'Comparar recorridos'}).click();
   const response=await res; assert.equal(response.status(),200);
-  await expect(page.locator('.route-card')).toHaveCount(3);
-  return response.json();
+  const original = await response.json();
+  assert.equal(original.features.length,3);
+  const extra = await (await experimental).json();
+  if (extra.estado === 'disponible') original.features.push(extra.feature);
+  await expect(page.locator('.route-card')).toHaveCount(original.features.length);
+  return original;
 }
 async function stored(page) {
   return page.evaluate(async()=> {
@@ -114,11 +119,11 @@ try {
     'display-mode standalone:',await page.evaluate(()=>matchMedia('(display-mode: standalone)').matches));
   assert.equal(await page.evaluate(()=>navigator.onLine),false);
   await page.locator('.saved-library li button').first().click();
-  for(const id of ['corta','historica','lightgbm']) {
-    const i=original.features.findIndex(f=>f.properties.id===id);
+  for(const [i, feature] of original.features.entries()) {
     await page.locator('.saved-options button').nth(i).click();
     await expect(page.locator('.saved-map path')).toHaveCount(1);
     await expect(page.locator('.saved-map path')).toHaveAttribute('d',/L/);
+    if (feature.properties.id === 'robos') await expect(page.locator('.saved-detail')).toContainText('2019–2022');
   }
   assert.deepEqual((await stored(page))[0],row);
   assert.equal(await page.locator('.saved-map .leaflet-tile').count(),0);
@@ -131,7 +136,7 @@ try {
   await page.getByRole('button',{name:'Eliminar',exact:true}).click();
   await expect(page.getByText('Aún no tienes recorridos guardados.')).toBeVisible();
   assert.deepEqual(await stored(page),[]);
-  console.log('Guardado, cuota, caída de FastAPI, cierre de Chromium, reapertura sin servidores, tres geometrías, recuperación y eliminación: OK');
+  console.log('Guardado, cuota, caída de FastAPI, reapertura sin servidores, recuperación y eliminación: OK. Geometrías comprobadas:', row.routes.features.length);
 } finally {
   if(installed && context) {
     const p=context.pages()[0] || await context.newPage();

@@ -28,7 +28,7 @@ test('consulta histórica local y piloto con las tres modalidades', async ({ pag
   await page.getByRole('button', {name:'Comparar recorridos'}).click();
   await expect(page.locator('.theft-summary h3')).toHaveText('Información histórica de tu recorrido');
   await expect(page.locator('.theft-summary')).toContainText('Otras modalidades');
-  await expect(page.locator('.route-line')).toHaveCount(3);
+  await expect(page.locator('.route-line:not(.route-robos)')).toHaveCount(3);
   await collapsePanel(page);
   const hit = await page.locator('.map-canvas').evaluate(map => {
     const bounds = map.getBoundingClientRect();
@@ -50,6 +50,7 @@ test('consulta histórica local y piloto con las tres modalidades', async ({ pag
 test('capa ausente permite comparar y conserva el aviso permanente', async ({page}) => {
   await page.route('**/robos-historicos*', r => r.fulfill({status:503,json:{detail:'No disponible'}}));
   await page.route('**/robos-historicos/cruces*', r => r.fulfill({status:503,json:{detail:'No disponible'}}));
+  await page.route('**/robos-historicos/alternativa', r => r.fulfill({status:503,json:{detail:'No disponible'}}));
   await page.goto('/');
   await page.getByRole('button',{name:'Capas',exact:true}).click();
   await page.getByRole('checkbox',{name:label}).check();
@@ -68,7 +69,7 @@ test('leyendas simultáneas dejan libres el mapa y sus controles', async ({page}
   await expandPanel(page);
   await page.getByRole('button',{name:'Probar recorrido de ejemplo'}).click();
   await page.getByRole('button',{name:'Comparar recorridos'}).click();
-  await expect(page.locator('.route-line')).toHaveCount(3);
+  await expect(page.locator('.route-line:not(.route-robos)')).toHaveCount(3);
   await page.getByRole('button',{name:'Capas',exact:true}).click();
   await page.getByLabel('Mostrar 25 cuadrículas').check();
   const loaded = page.waitForResponse(r => r.url().endsWith('/robos-historicos'));

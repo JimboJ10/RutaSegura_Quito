@@ -49,7 +49,7 @@ async function calculate(page: Page) {
     expect(Math.abs(feature.properties.distancia_km - refs[feature.properties.id as keyof typeof refs])).toBeLessThanOrEqual(.001);
     expect(feature.properties.desvio_pct).toBeLessThanOrEqual(15);
   }
-  await expect(page.getByRole('heading', { name: 'Tres modalidades de comparación' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /modalidades de comparación/ })).toBeVisible();
 }
 async function markerVisibility(page: Page) {
   // Se inspeccionan los marcadores y sus puntos de impacto; no solo el DOM presente.
@@ -131,7 +131,7 @@ test('carga y errores: respuesta real demorada, cobertura 422 y pérdida de red 
   await page.getByRole('button', { name: 'Comparar recorridos' }).click();
   await expect(page.getByRole('button', { name: 'Calculando recorridos…' })).toBeDisabled();
   release();
-  await expect(page.getByRole('heading', { name: 'Tres modalidades de comparación' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /modalidades de comparación/ })).toBeVisible();
   await page.unroute('**/rutas');
   await page.getByText('Introducir coordenadas', { exact: true }).click();
   await page.getByRole('spinbutton', { name: 'Origen: latitud' }).fill('0');
@@ -149,7 +149,7 @@ test('carga y errores: respuesta real demorada, cobertura 422 y pérdida de red 
   await expect(page.getByRole('alert')).toContainText('No se pudo conectar');
   await page.unroute('**/rutas');
   await page.getByRole('button', { name: 'Intentar nuevamente', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Tres modalidades de comparación' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /modalidades de comparación/ })).toBeVisible();
 });
 
 test('redimensionado conserva mapa y extremos; diálogo accesible por teclado', async ({ page }) => {

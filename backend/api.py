@@ -10,6 +10,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from config import COBERTURA, CORS_ORIGINS, CRS_ESPERADO, DESVIO_MAX, MAX_AJUSTE_M, PERIODO, PROYECTO, RED, VERSION_API, ZONA_DEMO
+from alternativa_robos import comparar, obtener_preparacion
 from geojson import coleccion_geojson
 from predicciones import PrediccionesNoDisponibles, cargar_predicciones
 from rutas import calcular_recorridos
@@ -17,6 +18,7 @@ from schemas import SolicitudRuta
 
 
 router = APIRouter()
+router_experimental = APIRouter()
 logger = logging.getLogger(__name__)
 
 
@@ -138,9 +140,7 @@ def health(request: Request):
     }
 
 
-@router.post("/rutas")
-def calcular_rutas(solicitud: SolicitudRuta, request: Request):
-    G = obtener_grafo(request)
+def ajustar_extremos(G, solicitud):
     a = solicitud.origen
     b = solicitud.destino
 
@@ -167,6 +167,13 @@ def calcular_rutas(solicitud: SolicitudRuta, request: Request):
             detail="Origen y destino coinciden en el mismo nodo."
         )
 
+    return inicio, fin, ajuste_a, ajuste_b
+
+
+@router.post("/rutas")
+def calcular_rutas(solicitud: SolicitudRuta, request: Request):
+    G = obtener_grafo(request)
+    inicio, fin, ajuste_a, ajuste_b = ajustar_extremos(G, solicitud)
     try:
         rutas = calcular_recorridos(G, inicio, fin)
     except nx.NetworkXNoPath:
@@ -176,4 +183,25 @@ def calcular_rutas(solicitud: SolicitudRuta, request: Request):
         )
 
     return coleccion_geojson(G, rutas, inicio, fin, ajuste_a, ajuste_b)
+
+
+@router_experimental.post("/robos-historicos/alternativa", summary="Comparar la concentración histórica de robos (2019–2022)",
+             responses={200: {"description": "Alternativa disponible, coincidente o sin alternativa útil"},
+                        422: {"description": "Extremos inválidos, fuera de cobertura o desconectados"},
+                        503: {"description": "Comparación experimental no disponible"}})
+def alternativa_historica(solicitud: SolicitudRuta, request: Request):
+    if (COBERTURA, RED) != ("demo", "peatonal_filtrada"):
+        raise HTTPException(503, "La comparación experimental requiere la demo peatonal filtrada.")
+    grafo = obtener_grafo(request)
+    extremos = ajustar_extremos(grafo, solicitud)
+    try:
+        resultado = comparar(obtener_preparacion(grafo), *extremos)
+    except HTTPException:
+        raise
+    except nx.NetworkXNoPath as exc:
+        raise HTTPException(422, "No existe una ruta conectada.") from exc
+    except Exception as exc:
+        logger.exception("Comparación histórica de robos no disponible")
+        raise HTTPException(503, "No se pudo evaluar la modalidad experimental.") from exc
+    return JSONResponse(resultado, headers={"Cache-Control": "no-store"})
 

@@ -7,6 +7,7 @@ import { HistoricalSafetyStats } from './components/HistoricalSafetyStats';
 import { Planner } from './components/Planner';
 import { RouteResults } from './components/RouteResults';
 import { useDemo, useRoutePlanner } from './useRutaSegura';
+import { useExperimentalRoute } from './useExperimentalRoute';
 import { periodLabel, ROUTE_META } from './types';
 import type { Endpoint, Point, RouteId } from './types';
 
@@ -19,7 +20,8 @@ export default function App() {
   const [target, setTarget] = useState<Endpoint | null>('origen');
   const [expanded, setExpanded] = useState(() => window.innerWidth >= 768);
   const [selected, setSelected] = useState<RouteId>('corta');
-  const history = useCrossings(planner.routes);
+  const { routes, message } = useExperimentalRoute(planner.routes, planner.points);
+  const history = useCrossings(routes);
   const [highlight, setHighlight] = useState(true);
   const [focus, setFocus] = useState<{ kind: 'zone' | 'route' | 'segments'; serial: number }>({ kind: 'zone', serial: 0 });
   const [library, setLibrary] = useState(false);
@@ -62,7 +64,7 @@ export default function App() {
     {offline && <div className="offline-banner" role="alert">Sin conexión a la red. Puedes consultar tus recorridos guardados.</div>}
     {library || offline || demo.error ? <main className="library-page">
       {demo.error && !offline && <div><p role="alert">{demo.error}</p><button className="secondary" onClick={demo.retry}>Intentar nuevamente</button></div>}
-      {planner.routes && (offline || demo.error) && <div><p>Última consulta de esta sesión</p><SaveTripButton points={planner.points} routes={planner.routes}/></div>}
+      {routes && (offline || demo.error) && <div><p>Última consulta de esta sesión</p><SaveTripButton points={planner.points} routes={routes}/></div>}
       <SavedLibrary />
       {library && !offline && !demo.error && <button className="secondary" onClick={() => setLibrary(false)}>Volver al planificador</button>}
     </main> : !demo.config ? <main className="startup-state">
@@ -85,14 +87,15 @@ export default function App() {
               planner.setPoint('destino', { lat: -0.184, lon: -78.486 });
               setTarget(null); center('zone');
             }} loading={planner.loading} error={planner.error} />
-          {planner.routes ? <div ref={resultsStart}><p className="sr-only" role="status">Tres modalidades disponibles; sus recorridos pueden coincidir. Selecciona una para comparar sus indicadores.</p><RouteResults routes={planner.routes} selected={selected} onSelect={setSelected} onFocus={() => { center('route'); setExpanded(false); }}>
+          {routes ? <div ref={resultsStart}><p className="sr-only" role="status">{routes.features.length} modalidades disponibles. Selecciona una para comparar sus indicadores.</p><RouteResults routes={routes} selected={selected} onSelect={setSelected} onFocus={() => { center('route'); setExpanded(false); }}>
+            {message && <p role="status" className="fine-print">{message}</p>}
             <TheftCrossings selected={selected} info={history} highlight={highlight} toggle={() => setHighlight(v => !v)} onZoom={() => { center('segments'); if (window.innerWidth < 768) setExpanded(false); }} />
-          </RouteResults><SaveTripButton routes={planner.routes} points={planner.points} /></div> :
+          </RouteResults><SaveTripButton key={routes.features.length} routes={routes} points={planner.points} /></div> :
             <div className="empty-state"><span className="empty-icon"><Icon name="walk" /></span><strong>Decide tu camino con datos.</strong><p>{DESCRIPTION}</p></div>}
           <p className="panel-footnote"><Icon name="info" />Ajuste máximo a la red: {demo.config.distancia_maxima_ajuste_m} m. Sin cálculo de accesos peatonales.</p>
         </div>
       </aside>
-      <MapView config={demo.config} points={planner.points} target={target} onPoint={choosePoint} routes={planner.routes}
+      <MapView config={demo.config} points={planner.points} target={target} onPoint={choosePoint} routes={routes}
         selected={selected} segments={highlight ? history?.[selected].tramos : undefined} onSelect={setSelected} focus={focus} onCenter={() => center('zone')}
         predictions={demo.predictions} predictionLoading={demo.predictionLoading} predictionError={demo.predictionError} onRetryPredictions={demo.retryPredictions} />
     </main>}

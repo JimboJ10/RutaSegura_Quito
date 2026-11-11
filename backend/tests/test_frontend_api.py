@@ -149,7 +149,8 @@ def test_config_publica_coincide_con_la_cobertura_real(cliente):
 def test_openapi_conserva_endpoints_y_documenta_los_nuevos(cliente):
     paths = cliente.get("/openapi.json").json()["paths"]
     assert set(paths) == {"/health", "/rutas", "/config", "/predicciones",
-                          "/robos-historicos", "/robos-historicos/cruces"}
+                          "/robos-historicos", "/robos-historicos/cruces", "/robos-historicos/alternativa"}
+    assert "503" in paths["/robos-historicos/alternativa"]["post"]["responses"]
     assert "503" in paths["/robos-historicos"]["get"]["responses"]
     assert "application/geo+json" in paths["/predicciones"]["get"]["responses"]["200"]["content"]
     assert "503" in paths["/config"]["get"]["responses"]

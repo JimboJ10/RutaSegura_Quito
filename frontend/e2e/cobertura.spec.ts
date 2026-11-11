@@ -37,7 +37,7 @@ test('React usa la cobertura activa para el mapa, las cuadrículas y las tres ru
   for (let i = 0; i < 3; i++) {
     expect(Math.abs(rutas.features[i].properties.distancia_km - distancias[i])).toBeLessThanOrEqual(.001);
   }
-  await expect(page.locator('.route-card')).toHaveCount(3);
+  await expect(page.locator('.route-card:not([data-modalidad="robos"])')).toHaveCount(3);
   await page.getByRole('button', { name: /Con estimación de IA/ }).click();
   await expect(page.locator('.route-lightgbm')).toHaveAttribute('stroke-width', '7');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

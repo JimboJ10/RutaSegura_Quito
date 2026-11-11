@@ -56,8 +56,8 @@ test('main:app filtrada: endpoints reales, indicadores y capturas responsive', a
     const lines = f.geometry.coordinates;
     for (let i = 1; i < lines.length; i++) expect(lines[i - 1].at(-1)).toEqual(lines[i][0]);
   }
-  await expect(page.locator('.route-card')).toHaveCount(3);
-  await expect(page.getByRole('heading', { name: 'Tres modalidades de comparación' })).toBeVisible();
+  await expect(page.locator('.route-card:not([data-modalidad="robos"])')).toHaveCount(3);
+  await expect(page.getByRole('heading', { name: /modalidades de comparación/ })).toBeVisible();
   await expect(page.getByText('Las modalidades pueden compartir el mismo recorrido.')).toBeVisible();
   await capture(page, `${testInfo.project.name}-02-resultados`);
   await collapsePanel(page);
@@ -97,6 +97,6 @@ test('isla desconectada y modalidades coincidentes no simulan tres caminos disti
   expect(data.features[1].geometry).toEqual(data.features[0].geometry);
   expect(data.features[2].geometry).toEqual(data.features[0].geometry);
   await expect(page.getByText('Las modalidades pueden compartir el mismo recorrido.')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Tres modalidades de comparación' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /modalidades de comparación/ })).toBeVisible();
   await capture(page, `${testInfo.project.name}-06-coincidentes`);
 });
