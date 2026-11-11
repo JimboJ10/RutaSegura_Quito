@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api import error_interno, error_validacion, router
 from config import CORS_ORIGINS, PROYECTO, VERSION_API
 from grafo import cargar_grafo
+from robos_historicos import router as robos_router
 
 
 @asynccontextmanager
@@ -37,3 +38,4 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 app.include_router(router)
+app.include_router(robos_router)

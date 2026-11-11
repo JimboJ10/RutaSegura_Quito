@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from './components/Icon';
+import { TheftCrossings } from './components/TheftHistory';
+import { SavedLibrary, SaveTripButton } from './components/SavedLibrary';
 import { MapView } from './components/MapView';
+import { HistoricalSafetyStats } from './components/HistoricalSafetyStats';
 import { Planner } from './components/Planner';
 import { RouteResults } from './components/RouteResults';
 import { useDemo, useRoutePlanner } from './useRutaSegura';
@@ -17,6 +20,7 @@ export default function App() {
   const [expanded, setExpanded] = useState(() => window.innerWidth >= 768);
   const [selected, setSelected] = useState<RouteId>('corta');
   const [focus, setFocus] = useState<{ kind: 'zone' | 'route'; serial: number }>({ kind: 'zone', serial: 0 });
+  const [library, setLibrary] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
   const dialog = useRef<HTMLDialogElement>(null);
   const resultsStart = useRef<HTMLDivElement>(null);
@@ -53,8 +57,13 @@ export default function App() {
       <a className="brand" href="./" aria-label="RutaInformada Quito, inicio"><span className="brand-symbol"><Icon name="route" /></span><span>RutaInformada<span className="brand-city">QUITO</span></span></a>
       <div className="header-right"><span className="experimental-tag">Explorador peatonal</span><span className={`connection ${demo.error || offline ? 'unavailable' : ''}`} role="status"><span className="live-dot" />{offline ? 'Sin conexión' : demo.loading ? 'Conectando…' : demo.error ? 'API no disponible' : 'Demo conectada'}</span></div>
     </header>
-    {offline && <div className="offline-banner" role="alert">Sin conexión a la red. Revisa tu Wi-Fi y vuelve a intentar la operación.</div>}
-    {!demo.config ? <main className="startup-state">
+    {offline && <div className="offline-banner" role="alert">Sin conexión a la red. Puedes consultar tus recorridos guardados.</div>}
+    {library || offline || demo.error ? <main className="library-page">
+      {demo.error && !offline && <div><p role="alert">{demo.error}</p><button className="secondary" onClick={demo.retry}>Intentar nuevamente</button></div>}
+      {planner.routes && (offline || demo.error) && <div><p>Última consulta de esta sesión</p><SaveTripButton points={planner.points} routes={planner.routes}/></div>}
+      <SavedLibrary />
+      {library && !offline && !demo.error && <button className="secondary" onClick={() => setLibrary(false)}>Volver al planificador</button>}
+    </main> : !demo.config ? <main className="startup-state">
       <span className="large-symbol"><Icon name="route" /></span><p className="eyebrow">Decide tu camino con datos.</p>
       <h1>{demo.loading ? 'Preparando tu mapa…' : 'No pudimos conectar'}</h1>
       {demo.loading ? <p role="status">Cargando la zona disponible y la red peatonal.</p> : <><p role="alert">{demo.error}</p><button className="primary" onClick={demo.retry}>Intentar nuevamente<Icon name="reset" /></button></>}
@@ -74,7 +83,7 @@ export default function App() {
               planner.setPoint('destino', { lat: -0.184, lon: -78.486 });
               setTarget(null); center('zone');
             }} loading={planner.loading} error={planner.error} />
-          {planner.routes ? <div ref={resultsStart}><p className="sr-only" role="status">Tres modalidades disponibles; sus recorridos pueden coincidir. Selecciona una para comparar sus indicadores.</p><RouteResults routes={planner.routes} selected={selected} onSelect={setSelected} onFocus={() => { center('route'); setExpanded(false); }} /></div> :
+          {planner.routes ? <div ref={resultsStart}><p className="sr-only" role="status">Tres modalidades disponibles; sus recorridos pueden coincidir. Selecciona una para comparar sus indicadores.</p><RouteResults routes={planner.routes} selected={selected} onSelect={setSelected} onFocus={() => { center('route'); setExpanded(false); }} /><SaveTripButton routes={planner.routes} points={planner.points} /><TheftCrossings routes={planner.routes} /></div> :
             <div className="empty-state"><span className="empty-icon"><Icon name="walk" /></span><strong>Decide tu camino con datos.</strong><p>{DESCRIPTION}</p></div>}
           <p className="panel-footnote"><Icon name="info" />Ajuste máximo a la red: {demo.config.distancia_maxima_ajuste_m} m. Sin cálculo de accesos peatonales.</p>
         </div>
@@ -83,12 +92,14 @@ export default function App() {
         selected={selected} onSelect={setSelected} focus={focus} onCenter={() => center('zone')}
         predictions={demo.predictions} predictionLoading={demo.predictionLoading} predictionError={demo.predictionError} onRetryPredictions={demo.retryPredictions} />
     </main>}
-    <footer className="app-footer"><span><span className="demo-label">DEMO</span>Retrospectiva · {demo.config ? periodLabel(demo.config.periodo) : 'junio de 2026'}</span><button onClick={openInfo}><Icon name="info" /><span>Sobre los datos</span></button></footer>
+    <p className="theft-note">Datos históricos de robos a personas registrados entre 2019 y 2022. No representan condiciones actuales de seguridad.</p>
+    <footer className="app-footer"><span><span className="demo-label">DEMO</span>Retrospectiva · {demo.config ? periodLabel(demo.config.periodo) : 'junio de 2026'}</span><button disabled={offline || !!demo.error} onClick={() => setLibrary(v => !v)} aria-pressed={library || offline || !!demo.error}>{library && !offline && !demo.error ? 'Planificador' : 'Guardados'}</button><button onClick={openInfo}><Icon name="info" /><span>Sobre los datos</span></button></footer>
     <dialog ref={dialog} className="data-dialog" aria-labelledby="data-title">
       <p className="eyebrow">RutaInformada Quito · Experimental</p><h2 id="data-title" tabIndex={-1}>Cómo leer este mapa</h2><p className="main-warning">{WARNING}</p>
       <p>{DESCRIPTION}</p>
       <ul>{demo.config?.advertencias.map(text => <li key={text}>{text}</li>)}</ul>
       <p>Las rutas parten y terminan en nodos ajustados. La distancia al nodo no es un itinerario de acceso. El límite del 15 % se aplica entre esos nodos.</p>
+      <HistoricalSafetyStats />
       <form method="dialog"><button className="primary full-width">Entendido, volver al mapa</button></form>
     </dialog>
   </div>;

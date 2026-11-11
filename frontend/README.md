@@ -223,3 +223,56 @@ Utiliza solo una red privada de confianza. El firewall puede bloquear Python/Nod
 - El diseño tiene safe areas, altura `dvh`, controles de al menos 44 px, alternativa manual por teclado, focos visibles y movimiento reducido. No equivale a una auditoría completa de accesibilidad.
 - Auditoría visual completada en Chromium en los siete tamaños indicados, con capturas inspeccionadas y sin desbordamiento horizontal en los estados revisados. Es emulación móvil, no una prueba en teléfonos físicos. Quedan pendientes Safari/WebKit, teclado virtual, barras dinámicas, áreas seguras y gestos en Android/iPhone reales.
 - El contrato completo sigue en [FRONTEND_API.md](../backend/FRONTEND_API.md). No se modificó ningún archivo del backend.
+
+## Robos históricos en el mapa
+
+En **Capas**, activa **Mostrar robos históricos (2019–2022)**. El color compara registros por km² en el periodo completo. Entre celdas comparables, el generador utiliza la mediana y el percentil 75 para distinguir los tres niveles de concentración. El selector «Consultar cuadrícula» permite leer los datos mientras se eligen puntos. Una vez elegidos los puntos, también se puede pulsar un polígono. Las celdas con 1–4 registros conservan el rango publicado y la densidad suprimida.
+
+Al calcular un recorrido, el panel consulta qué tramos pasan por el interior de cuadrículas de mayor concentración y señala las compartidas entre modalidades. La selección de rutas sigue basada en siniestros de tránsito. Los cruces se consultan aunque la capa visual esté apagada.
+
+FastAPI lee el GeoJSON agregado directamente desde `resultados/delincuencia_exploratoria/robos_historicos_2019_2022_cuadriculas.geojson` cuando se solicita `GET /robos-historicos` o `POST /robos-historicos/cruces`. Con el archivo ausente, ambos endpoints responden 503 y la planificación de rutas sigue disponible. El uso es local mientras se verifican los permisos de redistribución. Mantener el GeoJSON, su auditoría y las capturas que los muestren fuera de Git, del directorio público y del paquete de entrega.
+
+## PWA y recorridos guardados
+
+Para preparar la aplicación en esta computadora, inicia FastAPI en el puerto 8000 como en la demo habitual. En otra consola, desde `frontend`:
+
+```powershell
+$env:VITE_API_BASE_URL = '/api'
+npm.cmd run build
+npm.cmd run preview
+```
+
+Abre `http://localhost:4173`. La vista previa sirve la compilación de producción y dirige las solicitudes de `/api` a FastAPI en esta computadora. En **Guardados**, espera el mensaje **Aplicación lista para abrir sin conexión**. Puedes instalarla desde el menú de un navegador compatible. El servidor de desarrollo de Vite sigue dedicado a la edición del frontend.
+
+1. Calcula el recorrido con FastAPI. En los resultados, pulsa **Guardar recorrido** y espera la confirmación. Cada copia incluye las tres modalidades, los puntos solicitados y ajustados, sus geometrías, distancias, indicadores y periodo.
+2. Abre **Guardados**, elige una copia y pulsa una modalidad para consultar su trazado. La fecha de guardado y el periodo de referencia se muestran por separado. El visor utiliza Leaflet sobre un fondo local. **Eliminar** quita esa copia del dispositivo.
+3. Tras la primera carga completa puedes cerrar y reabrir el mismo origen, también desde la aplicación instalada. Con la red desconectada o FastAPI inaccesible, la pantalla ofrece la biblioteca local. El cálculo nuevo, las predicciones y la capa histórica necesitan el backend. Las calles del mapa base en el planificador utilizan teselas de OpenStreetMap.
+
+El indicador de red utiliza el estado que comunica el navegador. La disponibilidad de FastAPI se comprueba con `/health` al inicio, al recuperar red, al volver a la ventana y cada 15 segundos. La conexión a una Wi-Fi por sí sola no confirma acceso a internet. Al volver FastAPI, se puede calcular de nuevo. Si la base local está bloqueada o llena, se muestra el error del guardado. Se confirma una escritura al completar su transacción.
+
+El service worker de producción guarda una lista cerrada con HTML, JavaScript, CSS, manifest e iconos propios. Una nueva compilación tiene su propia revisión y se activa al cerrar las ventanas de la versión anterior. La aplicación conserva las copias voluntarias en IndexedDB, con versión de base y de registro. Teselas, respuestas de FastAPI y datos de robos quedan fuera de la precaché. Las mediciones aproximadas son **0,48 MB** de interfaz y **21 kB** de contenido para la copia del piloto. El espacio físico depende del navegador y de la longitud de las geometrías. El almacenamiento pertenece al perfil y al origen: borrar datos del sitio, cambiar el origen o la expulsión por el navegador puede hacer que las copias dejen de estar disponibles.
+
+### Ensayo en un teléfono
+
+Usa una red privada, la misma URL HTTPS para cargar, guardar y reabrir, y un certificado válido para el nombre o la IP que abrirá el teléfono. El dispositivo debe confiar en la cadena del certificado. Con el certificado y su clave en formato PEM fuera del repositorio y del directorio público, inicia FastAPI en el puerto local 8000. En la consola del frontend:
+
+```powershell
+$env:VITE_API_BASE_URL = '/api'
+npm.cmd run build
+$env:PWA_TLS_CERT = Read-Host 'Ruta del certificado PEM válido para la IP o nombre de la computadora'
+$env:PWA_TLS_KEY = Read-Host 'Ruta de la clave PEM'
+npm.cmd run preview -- --host 0.0.0.0
+```
+
+Abre `https://<IP-o-nombre-del-certificado>:4173`. Si usas un nombre DNS personalizado, autorízalo en Vite mediante `__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS` antes de iniciar la vista previa. El teléfono accede a la API por el mismo origen HTTPS. Una IP de la LAN servida por HTTP no habilita los service workers. Comprueba **Guardados**, instala desde el navegador, guarda el piloto, activa el modo avión y vuelve a abrir desde el icono. Reconecta y comprueba el cálculo en línea. La emulación de Chromium no sustituye este ensayo en Android o iPhone.
+
+### Comprobación automatizada de la PWA
+
+Desde `frontend`, con el Chromium completo del proyecto, las dependencias y los datos locales del MVP:
+
+```powershell
+$env:PLAYWRIGHT_BROWSERS_PATH = (Resolve-Path .playwright-browsers).Path
+node scripts/test-pwa.mjs
+```
+
+La prueba usa un perfil temporal y los puertos locales 4193 y 8893. Inicia y detiene sus propios servidores de vista previa y FastAPI. Verifica instalación, persistencia entre sesiones de navegador, cuota, consulta sin servidores, recuperación del piloto, lista de archivos precargados y eliminación. Los archivos de prueba quedan en `test-results/pwa`, excluido de Git.

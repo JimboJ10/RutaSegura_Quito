@@ -1,5 +1,7 @@
 import type { ApiConfig, Health, Point, Predictions, Routes } from './types';
 
+import type { TheftGrid, Crossings } from './thefts';
+
 export class ApiError extends Error {
   constructor(message: string, public status?: number) { super(message); this.name = 'ApiError'; }
 }
@@ -27,7 +29,7 @@ export function createApi(baseUrl: string | undefined) {
     try {
       const response = await fetch(`${baseUrl.trim().replace(/\/+$/, '')}${path}`, {
         method: body === undefined ? 'GET' : 'POST',
-        credentials: 'omit', signal: controller.signal,
+        cache: 'no-store', credentials: 'omit', signal: controller.signal,
         headers: { Accept: 'application/json, application/geo+json', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
@@ -46,6 +48,9 @@ export function createApi(baseUrl: string | undefined) {
     }
   }
   return {
+    thefts: (signal: AbortSignal) => request<TheftGrid>('/robos-historicos', signal),
+    theftCrossings: (routes: Routes, signal: AbortSignal) => request<Crossings>('/robos-historicos/cruces', signal,
+      Object.fromEntries(routes.features.map(f => [f.properties.id, f.geometry.coordinates]))),
     health: (signal: AbortSignal) => request<Health>('/health', signal),
     config: async (signal: AbortSignal) => {
       const data = await request<ApiConfig>('/config', signal);
@@ -67,19 +72,26 @@ export function createApi(baseUrl: string | undefined) {
     },
     routes: async (origen: Point, destino: Point, signal: AbortSignal) => {
       const data = await request<Routes>('/rutas', signal, { origen, destino });
-      if (data.type !== 'FeatureCollection' || !Array.isArray(data.features) || data.features.length !== 3 ||
-          new Set(data.features.map(f => f.properties?.id)).size !== 3 ||
-          !data.features.every(f => ['corta', 'historica', 'lightgbm'].includes(f.properties?.id) &&
-            f.geometry?.type === 'MultiLineString' && validPositions(f.geometry.coordinates, 2) &&
-            [f.properties.distancia_km, f.properties.desvio_pct, f.properties.indice_historico, f.properties.indice_lightgbm].every(nonnegative)) ||
-          !data.metadata || !['origen_ajustado', 'destino_ajustado'].every(key => {
-            const p = data.metadata[key as 'origen_ajustado' | 'destino_ajustado'];
-            return p && validPositions([p.lon, p.lat], 0) && nonnegative(p.distancia_ajuste_m);
-          }) || typeof data.metadata.advertencia !== 'string')
+      if (!validRoutes(data))
         throw new ApiError('La API no devolvió las tres rutas con geometrías e indicadores válidos.');
       return data;
     },
   };
+}
+export function validRoutes(value: unknown): value is Routes {
+  const data = value as Routes;
+  if (!data || data.type !== 'FeatureCollection' || !Array.isArray(data.features) || data.features.length !== 3)
+    return false;
+  const featuresValid = data.features.every(f => f?.type === 'Feature' &&
+    ['corta', 'historica', 'lightgbm'].includes(f.properties?.id) &&
+    f.geometry?.type === 'MultiLineString' && validPositions(f.geometry.coordinates, 2) &&
+    [f.properties.distancia_km, f.properties.desvio_pct, f.properties.indice_historico, f.properties.indice_lightgbm].every(nonnegative));
+  if (!featuresValid || new Set(data.features.map(f => f.properties.id)).size !== 3) return false;
+  const meta = data.metadata;
+  return !!meta && typeof meta.periodo === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(meta.periodo)
+    && typeof meta.tipo === 'string' && typeof meta.advertencia === 'string' && nonnegative(meta.desvio_maximo_pct)
+    && [meta.origen_ajustado, meta.destino_ajustado].every(p =>
+      p && validPositions([p.lon, p.lat], 0) && nonnegative(p.distancia_ajuste_m));
 }
 const nonnegative = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0;
 function validPositions(value: unknown, depth: number): boolean {
@@ -88,4 +100,4 @@ function validPositions(value: unknown, depth: number): boolean {
   return value.length === 2 && value.every(v => typeof v === 'number' && Number.isFinite(v)) &&
     Math.abs(value[0]) <= 180 && Math.abs(value[1]) <= 90;
 }
-export const api = createApi(import.meta.env.VITE_API_BASE_URL);
+export const api = createApi(import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? '/api' : undefined));

@@ -47,7 +47,7 @@ it('ofrece un reintento de capa sin sustituir predicciones por ceros', () => {
   render(<MapView {...input} predictions={null} predictionError="Las predicciones no están disponibles." />);
   fireEvent.click(screen.getByRole('button', { name: 'Capas' }));
   expect(screen.getByRole('alert').textContent).toContain('no están disponibles');
-  expect(screen.queryByRole('checkbox')).toBeNull();
+  expect(screen.queryByRole('checkbox', { name: /Mostrar .* cuadrículas/ })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Reintentar capa' }));
   expect(input.onRetryPredictions).toHaveBeenCalledOnce();
 });

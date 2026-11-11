@@ -1168,6 +1168,17 @@ select {
   margin-top:22px;
 }
 
+.safety-stats { margin-top:18px; padding:12px; border:1px solid var(--line); border-radius:12px; }
+.safety-stats h3 { margin:0 0 8px; font-size:17px; }
+.safety-stats table { width:100%; table-layout:fixed; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; }
+.safety-stats caption { margin-bottom:6px; text-align:left; }
+.safety-stats th,.safety-stats td { padding:6px 4px; text-align:right; vertical-align:middle; }
+.safety-stats th:first-child { text-align:left; width:38%; overflow-wrap:anywhere; }
+.safety-stats tfoot { border-top:1px solid var(--line); font-weight:700; }
+.stat-track { display:block; margin-top:3px; height:5px; background:#e3e9e3; }
+.stat-track > span { display:block; height:100%; background:#246753; }
+.data-dialog .safety-stats p { margin:8px 0 0; font-size:13px; }
+
 .startup-state {
   flex:1;
   min-height:0;
@@ -1475,7 +1486,7 @@ select {
 }
 
 @media(max-width:767px) {
-  .panel-expanded:has(.prediction-legend) .journey-panel {
+  .panel-expanded:has(.prediction-legend, .theft-legend) .journey-panel {
     height:min(52dvh,calc(100dvh - 452px));
   }
   .panel-expanded .map-bottom .route-legend {
@@ -1499,3 +1510,23 @@ select {
   .workspace:not(.panel-expanded) .panel-toggle > span { display:none; }
   .workspace:not(.panel-expanded) .panel-toggle svg { transform:rotate(-90deg); }
 }
+.theft-note { margin:0; padding:4px 12px; background:#faf9f5; color:#494c45; font-size:12px; line-height:1.3; text-align:center; }
+.theft-legend { background:#fffefaee; border-radius:9px; padding:6px 9px; font-size:11px; color:#393830; }
+.theft-legend div { display:flex; gap:2px 8px; flex-wrap:wrap; }
+.theft-legend span { white-space:nowrap; }
+.theft-legend i { display:inline-block; width:9px; height:9px; margin-right:3px; }
+.theft-summary { margin:12px 0; padding:12px; background:#f6f3ec; border-radius:10px; font-size:14px; }
+.theft-summary p,.theft-summary ul { margin:6px 0; }
+.theft-details { margin-top:8px; line-height:1.5; }
+@media (max-width:767px) and (min-height:600px) {
+  .panel-expanded:has(.theft-legend):has(.prediction-legend) .journey-panel {
+    height:clamp(160px,calc(100dvh - 610px),42dvh);
+  }
+}
+.library-page { flex:1; overflow:auto; background:#faf9f5; padding:16px max(16px,calc((100% - 780px)/2)); }
+.saved-library ul { padding:0; list-style:none; }
+.saved-library li,.saved-options { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+.saved-options [aria-pressed=true] { background:#154d40; color:white; }
+.saved-map { height:clamp(160px,32dvh,360px); background:#e3ece6; border-radius:12px; }
+.saved-library h1 { font-size:clamp(24px,5vw,36px); }
+.saved-detail { border-top:1px solid var(--line); margin-top:16px; }

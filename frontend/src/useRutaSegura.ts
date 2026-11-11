@@ -14,16 +14,38 @@ export function useDemo() {
   const [predictionAttempt, setPredictionAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true); setError('');
-    Promise.all([api.health(controller.signal), api.config(controller.signal)])
-      .then(([health, settings]) => {
-        if (!controller.signal.aborted) {
-          if (health.estado !== 'ok') throw new Error('La red de rutas no está disponible.');
+    let running = false;
+    let configured = false;
+    async function check() {
+      if (running || !navigator.onLine) return;
+      running = true;
+      try {
+        const health = await api.health(controller.signal);
+        if (health.estado !== 'ok') throw new Error('La red de rutas no está disponible.');
+        if (!configured) {
+          const settings = await api.config(controller.signal);
+          if (controller.signal.aborted) return;
           setConfig(settings);
+          configured = true;
         }
-      }).catch(error => { if (!controller.signal.aborted) setError(errorMessage(error)); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
+        if (!controller.signal.aborted) setError('');
+      } catch (cause) {
+        if (!controller.signal.aborted) setError(errorMessage(cause));
+      } finally {
+        running = false;
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
+    setLoading(true); setError('');
+    void check();
+    const timer = window.setInterval(check, 15000);
+    window.addEventListener('online', check);
+    window.addEventListener('focus', check);
+    return () => {
+      controller.abort(); clearInterval(timer);
+      window.removeEventListener('online', check);
+      window.removeEventListener('focus', check);
+    };
   }, [attempt]);
   useEffect(() => {
     if (!config) return;

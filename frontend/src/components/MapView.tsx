@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { CellSelector, TheftLayer, TheftLegend, useTheftGrid } from './TheftHistory';
 import L from 'leaflet';
 import { MapContainer, TileLayer, GeoJSON, Marker, Popup, CircleMarker, Pane, useMap, useMapEvents, ZoomControl } from 'react-leaflet';
 import { Icon } from './Icon';
@@ -9,14 +10,14 @@ const icons = {
   origen: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin origen"><span>A</span></span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
   destino: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin destino"><span>B</span></span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
 };
-function MapBehavior({ target, onPoint, focus, config, route, predictionsVisible }: {
+function MapBehavior({ target, onPoint, focus, config, route, predictionsVisible, theftVisible }: {
   target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
-  focus: { kind: 'zone' | 'route'; serial: number }; config: ApiConfig; route?: RouteFeature; predictionsVisible: boolean;
+  focus: { kind: 'zone' | 'route'; serial: number }; config: ApiConfig; route?: RouteFeature; predictionsVisible: boolean; theftVisible: boolean;
 }) {
   const map = useMapEvents({ click(event) { if (target) onPoint(target, { lat: event.latlng.lat, lon: event.latlng.lng }); } });
   const framing = useRef<{ bounds: L.LatLngBounds; route: boolean } | null>(null);
   const reserve = useRef(90);
-  reserve.current = predictionsVisible ? 160 : 90;
+  reserve.current = (predictionsVisible ? 160 : 90) + (theftVisible ? 62 : 0);
   const reframe = () => {
     map.invalidateSize({ pan: false });
     if (!framing.current) return;
@@ -40,7 +41,7 @@ function MapBehavior({ target, onPoint, focus, config, route, predictionsVisible
     }
     reframe();
     // Cambiar de tarjeta solo actualiza el estilo; el encuadre es una acción explícita.
-  }, [focus, config, map, predictionsVisible]);
+  }, [focus, config, map, predictionsVisible, theftVisible]);
   return null;
 }
 function RouteLayer({ route, selected, selectable, onSelect }: { route: RouteFeature; selected: boolean; selectable: boolean; onSelect: (id: RouteId) => void }) {
@@ -64,6 +65,8 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
   focus: { kind: 'zone' | 'route'; serial: number }; onCenter: () => void;
   predictions: Predictions | null; predictionLoading: boolean; predictionError: string; onRetryPredictions: () => void;
 }) {
+  const [showThefts, setShowThefts] = useState(false);
+  const theft = useTheftGrid(showThefts);
   const [visible, setVisible] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
   const [field, setField] = useState<PredictionField>('pred_lightgbm_v2');
@@ -82,7 +85,7 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores'
         eventHandlers={{ tileerror: () => setTileError(true) }} />
       <ZoomControl position="bottomright" zoomInTitle="Acercar mapa" zoomOutTitle="Alejar mapa" />
-      <MapBehavior config={config} target={target} onPoint={onPoint} focus={focus} route={selectedRoute} predictionsVisible={visible} />
+      <MapBehavior config={config} target={target} onPoint={onPoint} focus={focus} route={selectedRoute} predictionsVisible={visible} theftVisible={showThefts && !!theft.grid} />
       <Pane name="prediction-grid" style={{ zIndex: 350 }}>
       {visible && predictions && <GeoJSON key={field} data={predictions} pane="prediction-grid" interactive={false} style={feature => {
         const value = feature?.properties[field] ?? range.min;
@@ -90,6 +93,7 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
         return { color: '#94500f', weight: 1, fillColor: '#cf7a27', fillOpacity: 0.12 + proportion * 0.5 };
       }} />}
       </Pane>
+      {showThefts && theft.grid && <TheftLayer grid={theft.grid} picking={target !== null} />}
       <Pane name="route-lines" style={{ zIndex: 420 }}>
       {routes?.features.map(route => <RouteLayer key={route.properties.id + JSON.stringify(points)} route={route} selected={selected === route.properties.id} selectable={target === null} onSelect={onSelect} />)}
       </Pane>
@@ -112,9 +116,13 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
         </select>
         <p>Conteos mensuales estimados por celda de 1 km². El recorte visual mantiene el conteo original.</p>
       </>}
+      <label className="switch-label"><input type="checkbox" checked={showThefts} onChange={e => setShowThefts(e.target.checked)} />
+        <span>Mostrar robos históricos (2019–2022)</span></label>
+      {showThefts && (theft.grid ? <CellSelector grid={theft.grid} /> : <p role="status">{theft.error || 'Cargando robos históricos…'}</p>)}
     </div>}
     <div className="map-bottom">
       {tileError && <div className="tile-error" role="status">No se pudo cargar parte del mapa base. <button onClick={() => { setTileError(false); setTileAttempt(v => v + 1); }}>Reintentar mapa</button></div>}
+      {showThefts && theft.grid && <TheftLegend grid={theft.grid} />}
       {visible && predictions && <div className="prediction-legend"><strong>{field === 'pred_historico' ? 'Histórico' : 'LightGBM'} · siniestros estimados / mes</strong><div className="legend-gradient" /><div className="legend-range"><span>{format(range.min)}</span><span>{format(range.max)}</span></div><small>Por celda original de 1 km² · No es probabilidad</small></div>}
       {routes && <div className="route-legend" aria-label="Leyenda de rutas">{Object.entries(ROUTE_META).map(([id, meta]) => <span key={id}><i style={{ borderColor: meta.color, borderStyle: meta.dash ? 'dashed' : 'solid' }} />{meta.symbol} {meta.short}</span>)}</div>}
       {target && <p className="map-hint" role="status"><span className={`point-letter ${target}`}>{target === 'origen' ? 'A' : 'B'}</span>Toca el mapa para elegir {target === 'origen' ? 'el origen' : 'el destino'}</p>}
