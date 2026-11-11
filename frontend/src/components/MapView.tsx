@@ -7,10 +7,7 @@ import { Icon } from './Icon';
 import { format, ROUTE_META } from '../types';
 import type { ApiConfig, Endpoint, Point, Points, PredictionField, Predictions, RouteFeature, RouteId, Routes } from '../types';
 
-const icons = {
-  origen: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin origen"><span>A</span></span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
-  destino: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin destino"><span>B</span></span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
-};
+import { icons } from './pointIcons';
 function MapBehavior({ target, onPoint, focus, config, route, segments, predictionsVisible, theftVisible }: {
   target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
   focus: { kind: 'zone' | 'route' | 'segments'; serial: number }; config: ApiConfig; route?: RouteFeature; segments?: MultiLineString['coordinates']; predictionsVisible: boolean; theftVisible: boolean;

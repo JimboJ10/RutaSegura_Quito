@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { GeoJSON, MapContainer } from 'react-leaflet';
+import { GeoJSON, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import { icons } from './pointIcons';
 import { shellStatus } from '../pwa';
 import L from 'leaflet';
 import { deleteTrip, listSaved, saveTrip, storageMessage } from '../savedTrips';
 import type { SavedTrip } from '../savedTrips';
 import { format, periodLabel, ROUTE_META } from '../types';
-import type { Points, RouteId, Routes } from '../types';
+import type { Points, RouteFeature, RouteId, Routes } from '../types';
 import { TheftMetrics } from './RouteResults';
 
 export function SaveTripButton({ points, routes }: { points: Points; routes: Routes }) {
@@ -27,7 +28,33 @@ export function SaveTripButton({ points, routes }: { points: Points; routes: Rou
   </button>{error && <p role="alert">{error}</p>}</div>;
 }
 
+function FrameSavedRoute({feature, points}: {feature: RouteFeature; points: SavedTrip['points']}) {
+  const map = useMap();
+  useEffect(() => {
+    map.attributionControl.setPrefix(false);
+    const bounds = L.geoJSON(feature).getBounds();
+    for (const point of Object.values(points)) bounds.extend([point.lat, point.lon]);
+    const fit = () => {
+      map.invalidateSize({pan:false});
+      map.fitBounds(bounds, {paddingTopLeft:[28,52], paddingBottomRight:[28,30], maxZoom:18, animate:false});
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map, feature, points]);
+  return null;
+}
+
 function SavedDetail({trip}: {trip: SavedTrip}) {
+  const [online, setOnline] = useState(navigator.onLine);
+  const [tileError, setTileError] = useState(false);
+  useEffect(() => {
+    const sync = () => { setOnline(navigator.onLine); setTileError(false); };
+    window.addEventListener('online', sync);
+    window.addEventListener('offline', sync);
+    return () => { window.removeEventListener('online', sync); window.removeEventListener('offline', sync); };
+  }, []);
   const [selected, select] = useState<RouteId>('corta');
   const f = trip.routes.features.find(f => f.properties.id === selected)!;
   return <article className="saved-detail"><h2>Copia guardada</h2>
@@ -36,10 +63,18 @@ function SavedDetail({trip}: {trip: SavedTrip}) {
     <div className="saved-options">{trip.routes.features.map(({properties:r}) =>
       <button className="secondary" key={r.id} aria-pressed={selected === r.id} onClick={() => select(r.id)}>
         {ROUTE_META[r.id].name} · {format(r.distancia_km,3)} km</button>)}</div>
-    <MapContainer bounds={L.geoJSON(trip.routes).getBounds().pad(.12)} className="saved-map" attributionControl={false}
+    <MapContainer className="saved-map" maxZoom={19}
       scrollWheelZoom={false} aria-label="Geometría guardada">
+      <FrameSavedRoute feature={f} points={trip.points}/>
+      {online && !tileError && <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores'
+        eventHandlers={{tileerror: () => setTileError(true)}}/>}
       <GeoJSON key={selected} data={f} style={{color: ROUTE_META[selected].color, weight:5, dashArray: ROUTE_META[selected].dash}}/>
+      {(['origen','destino'] as const).map(key => <Marker key={key} icon={icons[key]}
+        position={[trip.points[key].lat,trip.points[key].lon]} title={key === 'origen' ? 'A · Origen solicitado' : 'B · Destino solicitado'}/>)}
     </MapContainer>
+    {(!online || tileError) && <p role="status">Mapa de calles no disponible sin conexión. Tu recorrido sigue guardado
+      {online && <button className="text-button" onClick={() => setTileError(false)}>Reintentar mapa</button>}</p>}
     <p>Trazado guardado entre nodos ajustados · {ROUTE_META[selected].name}</p>
     {f.properties.comparacion_robos && <TheftMetrics data={f.properties.comparacion_robos}/>}
     <p>Desvío {format(f.properties.desvio_pct)} % · Índice histórico {format(f.properties.indice_historico,4)} · Índice LightGBM {format(f.properties.indice_lightgbm,4)}</p>
