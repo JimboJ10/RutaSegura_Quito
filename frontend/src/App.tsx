@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from './components/Icon';
-import { TheftCrossings } from './components/TheftHistory';
+import { TheftCrossings, useCrossings } from './components/TheftHistory';
 import { SavedLibrary, SaveTripButton } from './components/SavedLibrary';
 import { MapView } from './components/MapView';
 import { HistoricalSafetyStats } from './components/HistoricalSafetyStats';
 import { Planner } from './components/Planner';
 import { RouteResults } from './components/RouteResults';
 import { useDemo, useRoutePlanner } from './useRutaSegura';
-import { periodLabel } from './types';
+import { periodLabel, ROUTE_META } from './types';
 import type { Endpoint, Point, RouteId } from './types';
 
 const WARNING = 'Demostración retrospectiva con datos de junio de 2026. Los indicadores no representan probabilidades individuales de accidente ni garantizan la seguridad de los recorridos.';
@@ -19,7 +19,9 @@ export default function App() {
   const [target, setTarget] = useState<Endpoint | null>('origen');
   const [expanded, setExpanded] = useState(() => window.innerWidth >= 768);
   const [selected, setSelected] = useState<RouteId>('corta');
-  const [focus, setFocus] = useState<{ kind: 'zone' | 'route'; serial: number }>({ kind: 'zone', serial: 0 });
+  const history = useCrossings(planner.routes);
+  const [highlight, setHighlight] = useState(true);
+  const [focus, setFocus] = useState<{ kind: 'zone' | 'route' | 'segments'; serial: number }>({ kind: 'zone', serial: 0 });
   const [library, setLibrary] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -31,7 +33,7 @@ export default function App() {
     info.querySelector<HTMLElement>('#data-title')?.focus({ preventScroll: true });
     info.scrollTop = 0;
   };
-  const center = (kind: 'zone' | 'route') => setFocus(previous => ({ kind, serial: previous.serial + 1 }));
+  const center = (kind: 'zone' | 'route' | 'segments') => setFocus(previous => ({ kind, serial: previous.serial + 1 }));
   useEffect(() => {
     const online = () => setOffline(false);
     const offline = () => setOffline(true);
@@ -40,7 +42,7 @@ export default function App() {
   }, []);
   useEffect(() => {
     if (!planner.routes) return;
-    setTarget(null); setExpanded(true); center('route');
+    setTarget(null); setExpanded(true); setHighlight(true); center('route');
     const frame = requestAnimationFrame(() => {
       const start = resultsStart.current;
       if (start?.parentElement) start.parentElement.scrollTop = start.offsetTop - start.parentElement.offsetTop;
@@ -70,7 +72,7 @@ export default function App() {
     </main> : <main className={`workspace ${expanded ? 'panel-expanded' : ''}`}>
       <aside id="journey-panel" className="journey-panel" aria-label="Planificación y resultados" tabIndex={-1}>
         <button className="panel-toggle" aria-label={expanded ? 'Contraer panel de rutas' : 'Expandir panel de rutas'} aria-expanded={expanded} aria-controls="panel-content" onClick={() => setExpanded(v => !v)}>
-          <span className="drawer-handle" /><span><strong>{planner.routes ? 'Tres modalidades' : 'Planea tu recorrido'}</strong><small>{planner.routes ? 'Compara distancias e indicadores' : 'Selecciona origen y destino en el mapa'}</small></span><Icon name="chevron" />
+          <span className="drawer-handle" /><span><strong>{planner.routes ? ROUTE_META[selected].name : 'Planea tu recorrido'}</strong><small>{planner.routes ? 'Modalidad seleccionada' : 'Selecciona origen y destino en el mapa'}</small></span><Icon name="chevron" />
         </button>
         <div id="panel-content" className="panel-content">
           <Planner config={demo.config} points={planner.points} target={target}
@@ -83,13 +85,15 @@ export default function App() {
               planner.setPoint('destino', { lat: -0.184, lon: -78.486 });
               setTarget(null); center('zone');
             }} loading={planner.loading} error={planner.error} />
-          {planner.routes ? <div ref={resultsStart}><p className="sr-only" role="status">Tres modalidades disponibles; sus recorridos pueden coincidir. Selecciona una para comparar sus indicadores.</p><RouteResults routes={planner.routes} selected={selected} onSelect={setSelected} onFocus={() => { center('route'); setExpanded(false); }} /><SaveTripButton routes={planner.routes} points={planner.points} /><TheftCrossings routes={planner.routes} /></div> :
+          {planner.routes ? <div ref={resultsStart}><p className="sr-only" role="status">Tres modalidades disponibles; sus recorridos pueden coincidir. Selecciona una para comparar sus indicadores.</p><RouteResults routes={planner.routes} selected={selected} onSelect={setSelected} onFocus={() => { center('route'); setExpanded(false); }}>
+            <TheftCrossings selected={selected} info={history} highlight={highlight} toggle={() => setHighlight(v => !v)} onZoom={() => { center('segments'); if (window.innerWidth < 768) setExpanded(false); }} />
+          </RouteResults><SaveTripButton routes={planner.routes} points={planner.points} /></div> :
             <div className="empty-state"><span className="empty-icon"><Icon name="walk" /></span><strong>Decide tu camino con datos.</strong><p>{DESCRIPTION}</p></div>}
           <p className="panel-footnote"><Icon name="info" />Ajuste máximo a la red: {demo.config.distancia_maxima_ajuste_m} m. Sin cálculo de accesos peatonales.</p>
         </div>
       </aside>
       <MapView config={demo.config} points={planner.points} target={target} onPoint={choosePoint} routes={planner.routes}
-        selected={selected} onSelect={setSelected} focus={focus} onCenter={() => center('zone')}
+        selected={selected} segments={highlight ? history?.[selected].tramos : undefined} onSelect={setSelected} focus={focus} onCenter={() => center('zone')}
         predictions={demo.predictions} predictionLoading={demo.predictionLoading} predictionError={demo.predictionError} onRetryPredictions={demo.retryPredictions} />
     </main>}
     <p className="theft-note">Datos históricos de robos a personas registrados entre 2019 y 2022. No representan condiciones actuales de seguridad.</p>

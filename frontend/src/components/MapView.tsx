@@ -1,3 +1,4 @@
+import type { MultiLineString } from 'geojson';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CellSelector, TheftLayer, TheftLegend, useTheftGrid } from './TheftHistory';
 import L from 'leaflet';
@@ -10,9 +11,9 @@ const icons = {
   origen: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin origen"><span>A</span></span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
   destino: L.divIcon({ className: 'point-marker', html: '<span class="marker-pin destino"><span>B</span></span>', iconSize: [44, 48], iconAnchor: [22, 46] }),
 };
-function MapBehavior({ target, onPoint, focus, config, route, predictionsVisible, theftVisible }: {
+function MapBehavior({ target, onPoint, focus, config, route, segments, predictionsVisible, theftVisible }: {
   target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
-  focus: { kind: 'zone' | 'route'; serial: number }; config: ApiConfig; route?: RouteFeature; predictionsVisible: boolean; theftVisible: boolean;
+  focus: { kind: 'zone' | 'route' | 'segments'; serial: number }; config: ApiConfig; route?: RouteFeature; segments?: MultiLineString['coordinates']; predictionsVisible: boolean; theftVisible: boolean;
 }) {
   const map = useMapEvents({ click(event) { if (target) onPoint(target, { lat: event.latlng.lat, lon: event.latlng.lng }); } });
   const framing = useRef<{ bounds: L.LatLngBounds; route: boolean } | null>(null);
@@ -21,8 +22,9 @@ function MapBehavior({ target, onPoint, focus, config, route, predictionsVisible
   const reframe = () => {
     map.invalidateSize({ pan: false });
     if (!framing.current) return;
+    const compactRoute = map.getSize().x < 768 && framing.current.route && reserve.current === 90;
     map.fitBounds(framing.current.bounds, {
-      paddingTopLeft: [42, 110], paddingBottomRight: [66, reserve.current],
+      paddingTopLeft: compactRoute ? [28, 78] : [42, 110], paddingBottomRight: compactRoute ? [55, 42] : [66, reserve.current],
       maxZoom: framing.current.route ? 17 : 15, animate: false,
     });
   };
@@ -32,7 +34,10 @@ function MapBehavior({ target, onPoint, focus, config, route, predictionsVisible
     return () => observer.disconnect();
   }, [map]);
   useEffect(() => {
-    if (focus.kind === 'route' && route) {
+    if (focus.kind === 'segments' && segments?.length) {
+      const geometry: MultiLineString = {type: 'MultiLineString', coordinates: segments};
+      framing.current = {bounds: L.geoJSON(geometry).getBounds(), route: true};
+    } else if (focus.kind !== 'zone' && route) {
       const bounds = L.geoJSON(route).getBounds();
       framing.current = { bounds, route: true };
     } else {
@@ -40,15 +45,16 @@ function MapBehavior({ target, onPoint, focus, config, route, predictionsVisible
       framing.current = { bounds: L.latLngBounds([south, west], [north, east]), route: false };
     }
     reframe();
-    // Cambiar de tarjeta solo actualiza el estilo; el encuadre es una acción explícita.
-  }, [focus, config, map, predictionsVisible, theftVisible]);
+  }, [focus, config, map, route, focus.kind === 'segments' ? segments : undefined, predictionsVisible, theftVisible]);
   return null;
 }
 function RouteLayer({ route, selected, selectable, onSelect }: { route: RouteFeature; selected: boolean; selectable: boolean; onSelect: (id: RouteId) => void }) {
   const layer = useRef<L.GeoJSON>(null);
   const meta = ROUTE_META[route.properties.id];
   useEffect(() => { if (selected) layer.current?.bringToFront(); }, [selected]);
-  return <GeoJSON ref={layer} data={route} pane="route-lines" style={{ className: `route-line route-${route.properties.id}`, color: meta.color, weight: selected ? 7 : 4, opacity: selected ? 1 : 0.45, dashArray: meta.dash }}
+  const options: L.PolylineOptions = {className: `route-line route-${route.properties.id}`, color: meta.color,
+    smoothFactor: 0, weight: selected ? 7 : 4, opacity: selected ? 1 : 0.22, dashArray: meta.dash};
+  return <GeoJSON ref={layer} data={route} pane="route-lines" style={options}
     eventHandlers={{ click(event) { if (selectable) { L.DomEvent.stopPropagation(event.originalEvent); onSelect(route.properties.id); } } }} />;
 }
 function MapAccessibility() {
@@ -59,10 +65,11 @@ function MapAccessibility() {
   }, [map]);
   return null;
 }
-export function MapView({ config, points, target, onPoint, routes, selected, onSelect, focus, onCenter, predictions, predictionLoading, predictionError, onRetryPredictions }: {
+export function MapView({ config, points, target, onPoint, routes, selected, segments, onSelect, focus, onCenter, predictions, predictionLoading, predictionError, onRetryPredictions }: {
+  segments?: MultiLineString['coordinates'];
   config: ApiConfig; points: Points; target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
   routes: Routes | null; selected: RouteId; onSelect: (id: RouteId) => void;
-  focus: { kind: 'zone' | 'route'; serial: number }; onCenter: () => void;
+  focus: { kind: 'zone' | 'route' | 'segments'; serial: number }; onCenter: () => void;
   predictions: Predictions | null; predictionLoading: boolean; predictionError: string; onRetryPredictions: () => void;
 }) {
   const [showThefts, setShowThefts] = useState(false);
@@ -78,6 +85,8 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
     const values = predictions?.features.map(f => f.properties[field]) ?? [0];
     return { min: Math.min(...values), max: Math.max(...values) };
   }, [predictions, field]);
+  const segmentGeometry: MultiLineString | undefined = segments?.length ? {type:'MultiLineString', coordinates:segments} : undefined;
+  const outline: L.PolylineOptions = {smoothFactor:0, color:'#a63845', weight:11, opacity:.88, lineCap:'butt'};
   const selectedRoute = routes?.features.find(f => f.properties.id === selected);
   return <section className={`map-region ${target ? 'picking' : ''}`} aria-label="Mapa y capas">
     <MapContainer bounds={[[south, west], [north, east]]} zoomControl={false} className="map-canvas" minZoom={11} maxZoom={19}>
@@ -85,7 +94,7 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores'
         eventHandlers={{ tileerror: () => setTileError(true) }} />
       <ZoomControl position="bottomright" zoomInTitle="Acercar mapa" zoomOutTitle="Alejar mapa" />
-      <MapBehavior config={config} target={target} onPoint={onPoint} focus={focus} route={selectedRoute} predictionsVisible={visible} theftVisible={showThefts && !!theft.grid} />
+      <MapBehavior config={config} target={target} onPoint={onPoint} focus={focus} route={selectedRoute} segments={segments} predictionsVisible={visible} theftVisible={showThefts && !!theft.grid} />
       <Pane name="prediction-grid" style={{ zIndex: 350 }}>
       {visible && predictions && <GeoJSON key={field} data={predictions} pane="prediction-grid" interactive={false} style={feature => {
         const value = feature?.properties[field] ?? range.min;
@@ -94,6 +103,10 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
       }} />}
       </Pane>
       {showThefts && theft.grid && <TheftLayer grid={theft.grid} picking={target !== null} />}
+      <Pane name="historical-segments" style={{ zIndex: 415, pointerEvents: 'none' }}>
+        {segmentGeometry && <GeoJSON key={selected + JSON.stringify(points)} interactive={false} pane="historical-segments"
+          data={segmentGeometry} style={outline} />}
+      </Pane>
       <Pane name="route-lines" style={{ zIndex: 420 }}>
       {routes?.features.map(route => <RouteLayer key={route.properties.id + JSON.stringify(points)} route={route} selected={selected === route.properties.id} selectable={target === null} onSelect={onSelect} />)}
       </Pane>
@@ -116,6 +129,7 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
         </select>
         <p>Conteos mensuales estimados por celda de 1 km². El recorte visual mantiene el conteo original.</p>
       </>}
+      <strong className="advanced-label">Exploración avanzada</strong>
       <label className="switch-label"><input type="checkbox" checked={showThefts} onChange={e => setShowThefts(e.target.checked)} />
         <span>Mostrar robos históricos (2019–2022)</span></label>
       {showThefts && (theft.grid ? <CellSelector grid={theft.grid} /> : <p role="status">{theft.error || 'Cargando robos históricos…'}</p>)}
@@ -124,7 +138,8 @@ export function MapView({ config, points, target, onPoint, routes, selected, onS
       {tileError && <div className="tile-error" role="status">No se pudo cargar parte del mapa base. <button onClick={() => { setTileError(false); setTileAttempt(v => v + 1); }}>Reintentar mapa</button></div>}
       {showThefts && theft.grid && <TheftLegend grid={theft.grid} />}
       {visible && predictions && <div className="prediction-legend"><strong>{field === 'pred_historico' ? 'Histórico' : 'LightGBM'} · siniestros estimados / mes</strong><div className="legend-gradient" /><div className="legend-range"><span>{format(range.min)}</span><span>{format(range.max)}</span></div><small>Por celda original de 1 km² · No es probabilidad</small></div>}
-      {routes && <div className="route-legend" aria-label="Leyenda de rutas">{Object.entries(ROUTE_META).map(([id, meta]) => <span key={id}><i style={{ borderColor: meta.color, borderStyle: meta.dash ? 'dashed' : 'solid' }} />{meta.symbol} {meta.short}</span>)}</div>}
+      {routes && <div className="route-legend" aria-label="Leyenda de rutas"><span><i style={{borderColor: ROUTE_META[selected].color}} />{ROUTE_META[selected].short}</span>
+        {!!segments?.length && <span><i style={{borderColor:'#a63845'}} />Zona histórica · 2019–2022</span>}</div>}
       {target && <p className="map-hint" role="status"><span className={`point-letter ${target}`}>{target === 'origen' ? 'A' : 'B'}</span>Toca el mapa para elegir {target === 'origen' ? 'el origen' : 'el destino'}</p>}
     </div>
   </section>;

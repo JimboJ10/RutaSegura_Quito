@@ -1,4 +1,4 @@
-import type { FeatureCollection, Polygon } from 'geojson';
+import type { FeatureCollection, MultiLineString, Polygon } from 'geojson';
 import type { RouteId } from './types';
 
 export const categories = {
@@ -14,4 +14,4 @@ export type TheftCell = {
   area_km2: number; densidad_registros_periodo_km2: number | null; nivel: keyof typeof categories;
 };
 export type TheftGrid = FeatureCollection<Polygon, TheftCell>;
-export type Crossings = Record<RouteId, string[]>;
+export type Crossings = Record<RouteId, { zonas: string[]; tramos: MultiLineString['coordinates'] }>;

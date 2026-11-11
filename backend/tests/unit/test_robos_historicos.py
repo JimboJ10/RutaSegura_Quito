@@ -57,3 +57,32 @@ def test_archivo_opcional_no_disponible(cliente, defecto):
         robos.ARCHIVO.write_text(json.dumps(datos))
     assert cliente.get("/robos-historicos").status_code == 503
     assert cliente.post("/robos-historicos/cruces", json={"corta": [[[0, 0], [1, 1]]]}).status_code == 503
+
+
+def test_detalle_recorta_sin_unir_tramos_ni_incluir_el_borde(cliente):
+    # Primer tramo sobre el borde, luego entra, sale y regresa por otro lado.
+    peticion = {"corta": [[[-1, 0], [.25, 0], [.25, .5], [2, .5]],
+                          [[2, .75], [.5, .75]]],
+                "historica": [[[-1, 0], [2, 0]]],
+                "lightgbm": [[[-1, -1], [0, 0]]]}
+    datos = cliente.post("/robos-historicos/cruces?detalle=true", json=peticion).json()
+    assert datos["corta"]["zonas"] == ["0"]
+    from shapely.geometry import MultiLineString
+    tramos = MultiLineString(datos["corta"]["tramos"])
+    esperado = MultiLineString([[(.25, 0), (.25, .5), (1, .5)], [(1, .75), (.5, .75)]])
+    assert tramos.equals(esperado)
+    assert datos["historica"] == datos["lightgbm"] == {"zonas": [], "tramos": []}
+
+
+def test_detalle_respeta_huecos_y_archivo_ausente(cliente):
+    datos = json.loads(robos.ARCHIVO.read_text())
+    datos["features"][0]["geometry"]["coordinates"].append(
+        [[.25, .25], [.25, .75], [.75, .75], [.75, .25], [.25, .25]])
+    robos.ARCHIVO.write_text(json.dumps(datos))
+    peticion = {"corta": [[[0, .5], [1, .5]]]}
+    endpoint = "/robos-historicos/cruces?detalle=true"
+    from shapely.geometry import MultiLineString
+    tramos = cliente.post(endpoint, json=peticion).json()["corta"]["tramos"]
+    assert MultiLineString(tramos).equals(MultiLineString([[(0, .5), (.25, .5)], [(.75, .5), (1, .5)]]))
+    robos.ARCHIVO.unlink()
+    assert cliente.post(endpoint, json=peticion).status_code == 503

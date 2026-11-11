@@ -1530,3 +1530,32 @@ select {
 .saved-map { height:clamp(160px,32dvh,360px); background:#e3ece6; border-radius:12px; }
 .saved-library h1 { font-size:clamp(24px,5vw,36px); }
 .saved-detail { border-top:1px solid var(--line); margin-top:16px; }
+
+/* Comparación y lectura del recorrido activo. */
+.results > h2 { font-size:clamp(18px,2vw,23px); margin:0 0 12px; line-height:1.2; }
+.mode-picker { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; }
+.mode-picker .mode-button { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; gap:4px; padding:9px 7px; border:1px solid var(--line); border-top:3px solid var(--route-color); border-radius:9px; line-height:1.2; }
+.mode-picker .mode-button.selected { background:#edf3eb; border-color:var(--route-color); box-shadow:inset 0 0 0 1px var(--route-color); }
+.mode-button:focus-visible,.history-toggle:has(input:focus-visible) { outline:3px solid #235782; outline-offset:2px; }
+.mode-label { flex:1; font-weight:650; font-size:14px; color:#23392f; }
+.mode-button strong { font-size:15px; white-space:nowrap; }
+.mode-button small { font-size:12px; color:#4e6057; }
+.chosen-mode h3,.theft-summary h3 { font-size:18px; line-height:1.22; margin:4px 0; }
+.chosen-mode { margin:14px 0; }
+.chosen-mode p,.theft-summary p { margin:4px 0; font-size:14px; line-height:1.45; }
+.theft-summary { background:#fcf5f2; color:#392e2e; border:1px solid #e6d3ce; border-left:3px solid #a63845; border-radius:10px; padding:12px 14px; margin:8px 0 12px; }
+.history-period { font-size:12px; font-weight:700; color:#7c3442; }
+.theft-summary small { display:block; font-size:13px; line-height:1.4; }
+.history-toggle { min-height:44px; display:flex; align-items:center; gap:9px; cursor:pointer; font-weight:650; }
+.history-toggle input { width:20px; height:20px; accent-color:#863544; }
+.advanced-label { display:block; padding-top:10px; margin-top:10px; border-top:1px solid var(--line); }
+@media(min-width:1024px) {
+  .workspace.panel-expanded:has(.mode-picker) { grid-template-columns:min(35vw,440px) minmax(0,1fr); }
+}
+@media(max-width:767px) {
+  .panel-expanded:has(.mode-picker) .journey-panel { max-height:48dvh; }
+}
+
+.route-legend i { border-top-style:solid; }
+.mode-picker .mode-button.selected { background:color-mix(in srgb,var(--route-color) 8%, white); }
+.history-zoom { display:block; min-height:44px; padding:4px 0; background:transparent; color:#69303a; text-decoration:underline; font-weight:650; }

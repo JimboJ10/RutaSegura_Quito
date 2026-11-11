@@ -60,7 +60,7 @@ Aplica el mismo prefijo a `ci`, `test` o `run build` si fuera necesario. Ajusta 
 2. Toca el mapa para elegir A (origen) y B (destino). Sus botones permiten cambiarlos. También puedes introducir coordenadas por teclado, intercambiarlas o restablecerlas.
 3. «Probar recorrido de ejemplo» coloca los puntos conocidos; todavía no solicita rutas.
 4. «Comparar recorridos» envía exclusivamente `{ origen: { lat, lon }, destino: { lat, lon } }` a `POST /rutas`.
-5. Elige una de las tres tarjetas. El mapa conserva las otras alternativas atenuadas; etiquetas 01/02/03 y trazos diferentes complementan los colores.
+5. Elige una modalidad. Las opciones muestran distancia y diferencia respecto a la más corta. El mapa destaca el trazado seleccionado y atenúa los otros dos.
 6. «Ver recorrido seleccionado» encuadra la geometría. «Centrar zona» recupera el bbox disponible.
 7. En «Capas», muestra las cuadrículas de la zona activa y cambia entre histórico y LightGBM. La demo tiene 25 celdas y el ensayo ampliado tiene 99. La escala usa el mínimo y máximo del campo seleccionado. Las unidades son conteos mensuales estimados por celda original de 1 km².
 8. «Sobre los datos», siempre accesible en el pie, explica la demostración y sus límites.
@@ -228,9 +228,9 @@ Utiliza solo una red privada de confianza. El firewall puede bloquear Python/Nod
 
 En **Capas**, activa **Mostrar robos históricos (2019–2022)**. El color compara registros por km² en el periodo completo. Entre celdas comparables, el generador utiliza la mediana y el percentil 75 para distinguir los tres niveles de concentración. El selector «Consultar cuadrícula» permite leer los datos mientras se eligen puntos. Una vez elegidos los puntos, también se puede pulsar un polígono. Las celdas con 1–4 registros conservan el rango publicado y la densidad suprimida.
 
-Al calcular un recorrido, el panel consulta qué tramos pasan por el interior de cuadrículas de mayor concentración y señala las compartidas entre modalidades. La selección de rutas sigue basada en siniestros de tránsito. Los cruces se consultan aunque la capa visual esté apagada.
+La tarjeta **Información histórica de tu recorrido** describe solo la modalidad seleccionada y señala si comparte zonas con otra. **Resaltar tramos en el mapa** controla el contorno rojo. **Acercar a los tramos** permite ver el detalle. El contorno sigue las partes del trazado que atraviesan el interior de zonas de mayor concentración histórica, excluyendo esquinas y segmentos sobre el borde. La selección de rutas sigue basada en siniestros de tránsito. Los cruces se consultan aunque la capa visual esté apagada.
 
-FastAPI lee el GeoJSON agregado directamente desde `resultados/delincuencia_exploratoria/robos_historicos_2019_2022_cuadriculas.geojson` cuando se solicita `GET /robos-historicos` o `POST /robos-historicos/cruces`. Con el archivo ausente, ambos endpoints responden 503 y la planificación de rutas sigue disponible. El uso es local mientras se verifican los permisos de redistribución. Mantener el GeoJSON, su auditoría y las capturas que los muestren fuera de Git, del directorio público y del paquete de entrega.
+FastAPI lee el GeoJSON agregado directamente desde `resultados/delincuencia_exploratoria/robos_historicos_2019_2022_cuadriculas.geojson` cuando se solicita `GET /robos-historicos` o `POST /robos-historicos/cruces`. La opción `?detalle=true` devuelve zonas y tramos GeoJSON (coordenadas de MultiLineString) para cada modalidad. Con el archivo ausente, ambos endpoints responden 503 y la planificación de rutas sigue disponible. El uso es local mientras se verifican los permisos de redistribución. Mantener el GeoJSON, su auditoría y las capturas que los muestren fuera de Git, del directorio público y del paquete de entrega.
 
 ## PWA y recorridos guardados
 

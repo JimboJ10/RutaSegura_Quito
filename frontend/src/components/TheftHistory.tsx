@@ -3,7 +3,7 @@ import { GeoJSON, Pane, Popup } from 'react-leaflet';
 import { api } from '../api';
 import { categories } from '../thefts';
 import type { Crossings, TheftCell, TheftGrid } from '../thefts';
-import { format, ROUTE_META } from '../types';
+import { format } from '../types';
 import type { RouteId, Routes } from '../types';
 
 export function useTheftGrid(visible: boolean) {
@@ -57,26 +57,40 @@ export function TheftLegend({ grid }: {grid: TheftGrid}) {
   </div></div>;
 }
 
-export function TheftCrossings({ routes }: {routes: Routes}) {
-  const [info, setInfo] = useState<Crossings | null>(null);
-  const [error, setError] = useState(false);
+export function useCrossings(routes: Routes | null) {
+  const [result, setResult] = useState<{ routes: Routes; data: Crossings | null } | null>(null);
   useEffect(() => {
+    if (!routes) return;
     const controller = new AbortController();
-    setInfo(null); setError(false);
     api.theftCrossings(routes, controller.signal).then(data => {
-      if (!controller.signal.aborted) setInfo(data);
-    }).catch(() => { if (!controller.signal.aborted) setError(true); });
+      for (const {properties} of routes.features) {
+        const entry = data[properties.id];
+        if (!Array.isArray(entry?.zonas) || !Array.isArray(entry.tramos)) throw new Error('Detalle no disponible');
+      }
+      if (!controller.signal.aborted) setResult({routes, data});
+    }).catch(() => { if (!controller.signal.aborted) setResult({routes, data: null}); });
     return () => controller.abort();
   }, [routes]);
-  const ids = Object.keys(ROUTE_META) as RouteId[];
-  const shared = info ? [...new Set(ids.flatMap(id => info[id]))].filter(cell =>
-    ids.filter(id => info[id].includes(cell)).length > 1) : [];
-  return <section className="theft-summary" aria-label="Cruces históricos" aria-live="polite">
-    <strong>Robos registrados en 2019–2022</strong>
-    {error ? <p>Consulta histórica no disponible para estos recorridos.</p> : !info ? <p>Consultando cruces…</p> :
-      <><p>Cuadrículas de mayor concentración histórica que atraviesa cada modalidad:</p>
-        <ul>{ids.map(id => <li key={id}>{ROUTE_META[id].short}: {info[id].join(', ') || 'ninguna'}</li>)}</ul>
-        {shared.length > 0 && <p>Cuadrículas compartidas por varias modalidades: {shared.join(', ')}.</p>}
-        <small>Comparación por densidad de registros del periodo, sin estimar probabilidades individuales.</small></>}
+  return result && result.routes === routes ? result.data : undefined;
+}
+
+export function TheftCrossings({ info, selected, highlight, toggle, onZoom }: {
+  info: Crossings | null | undefined; selected: RouteId; highlight: boolean; toggle: () => void; onZoom: () => void;
+}) {
+  const zones = info?.[selected].zonas ?? [];
+  const shared = info && Object.entries(info).some(([id, other]) =>
+    id !== selected && other.zonas.some(z => zones.includes(z)));
+  return <section className="theft-summary" aria-labelledby="history-title">
+    <span className="history-period">Robos a personas · 2019–2022</span>
+    <h3 id="history-title">Información histórica de tu recorrido</h3>
+    <p role="status">{info === null ? 'Consulta histórica no disponible para este recorrido.' :
+      !info ? 'Consultando el trazado…' : zones.length === 0 ?
+      'Este recorrido no atraviesa zonas de mayor concentración histórica de robos.' :
+      <>Atraviesa <b>{zones.length === 1 ? 'una zona' : zones.length + ' zonas'}</b> de mayor concentración histórica de robos.
+        {shared && ' Otras modalidades también pasan por alguna de estas zonas.'}</>}</p>
+    {zones.length > 0 && <label className="history-toggle"><input type="checkbox" checked={highlight} onChange={toggle} />
+      Resaltar tramos en el mapa</label>}
+    {zones.length > 0 && highlight && <button type="button" className="history-zoom" onClick={onZoom}>Acercar a los tramos</button>}
+    <small>Son registros agrupados por zona. El contorno no indica el lugar exacto de un delito ni un peligro actual.</small>
   </section>;
 }

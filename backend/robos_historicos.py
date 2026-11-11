@@ -64,13 +64,31 @@ def cuadriculas():
     return GeoJSONResponse(leer_capa(), headers={"Cache-Control": "no-store"})
 
 
+def partes_lineales(geom):
+    """Extrae líneas con longitud positiva de una intersección, sin unir partes."""
+    if geom.geom_type == "LineString" and geom.length > 0:
+        yield list(geom.coords)
+    elif geom.geom_type in ("GeometryCollection", "MultiLineString"):
+        for parte in geom.geoms:
+            yield from partes_lineales(parte)
+
+
 @router.post("/cruces", responses={503: {"description": "Capa local no disponible"}})
-def cruces(trazados: dict[Modalidad, Annotated[list[Linea], Field(min_length=1)]]):
+def cruces(trazados: dict[Modalidad, Annotated[list[Linea], Field(min_length=1)]], detalle: bool = False):
     altas = [(f["properties"]["celda_id"], shape(f["geometry"])) for f in leer_capa()["features"]
              if f["properties"]["nivel"] == ALTA]
     resultado = {}
     for modalidad, lineas in trazados.items():
         ruta = MultiLineString(lineas)
         # DE-9IM: un tramo de longitud positiva en el interior; tocar el borde no cuenta.
-        resultado[modalidad] = [celda for celda, poligono in altas if ruta.relate_pattern(poligono, "1********")]
+        cruza = [(celda, zona) for celda, zona in altas if ruta.relate_pattern(zona, "1********")]
+        zonas = [celda for celda, _ in cruza]
+        if detalle:
+            tramos = []
+            for _, zona in cruza:
+                interior = ruta.intersection(zona).difference(zona.boundary)
+                tramos.extend(partes_lineales(interior))
+            resultado[modalidad] = {"zonas": zonas, "tramos": tramos}
+        else:
+            resultado[modalidad] = zonas
     return resultado

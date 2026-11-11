@@ -30,7 +30,7 @@ it('el ejemplo solicita las tres rutas al backend y permite elegirlas', async ()
   fireEvent.click(screen.getByRole('button', { name: 'Comparar recorridos' }));
   await screen.findByRole('heading', { name: 'Tres modalidades de comparación' });
   expect(api.routes).toHaveBeenCalledWith(request.origen, request.destino, expect.any(AbortSignal));
-  const historical = screen.getByRole('button', { name: /Ruta histórica/ });
+  const historical = screen.getByRole('button', { name: /Menor concentración histórica de siniestros/ });
   fireEvent.click(historical);
   expect(historical.getAttribute('aria-pressed')).toBe('true');
   expect(screen.getByText('104,7 m')).toBeTruthy();
@@ -58,7 +58,7 @@ it('describe modalidades aunque las tres geometrías coincidan', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Comparar recorridos' }));
   await screen.findByRole('heading', { name: 'Tres modalidades de comparación' });
   expect(screen.getByText('Las modalidades pueden compartir el mismo recorrido.')).toBeTruthy();
-  expect(screen.getAllByRole('button', { name: /Ruta más corta|Ruta histórica|Ruta LightGBM/ })).toHaveLength(3);
+  expect(screen.getAllByRole('button', { name: /Más corta|Menor concentración histórica de siniestros|Con estimación de IA/ })).toHaveLength(3);
 });
 it('muestra indisponibilidad del backend y recupera la conexión con reintento', async () => {
   vi.mocked(api.health).mockRejectedValueOnce(new Error('No se pudo conectar con el backend.'));

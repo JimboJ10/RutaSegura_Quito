@@ -78,7 +78,7 @@ test('flujo real: mapa, puntos, tres rutas, resaltado, capas y panel', async ({ 
   expect(await page.locator('.point-marker').count()).toBe(2);
   await selectExample(page);
   await calculate(page);
-  for (const [id, name] of [['corta', 'Ruta más corta'], ['historica', 'Ruta histórica'], ['lightgbm', 'Ruta LightGBM']]) {
+  for (const [id, name] of [['corta', 'Más corta'], ['historica', 'Menor concentración histórica de siniestros'], ['lightgbm', 'Con estimación de IA']]) {
     const card = page.getByRole('button', { name: new RegExp(name) });
     await card.click();
     await expect(card).toHaveAttribute('aria-pressed', 'true');
@@ -179,7 +179,7 @@ test('redimensionado conserva mapa y extremos; diálogo accesible por teclado', 
 test('indisponibilidad inicial simulada permite reconectar al backend real', async ({ page }) => {
   await page.route('**/health', route => route.abort('failed'));
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'No pudimos conectar' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Recorridos guardados' })).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('No se pudo conectar');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.unroute('**/health');

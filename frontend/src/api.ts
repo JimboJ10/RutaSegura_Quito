@@ -49,7 +49,7 @@ export function createApi(baseUrl: string | undefined) {
   }
   return {
     thefts: (signal: AbortSignal) => request<TheftGrid>('/robos-historicos', signal),
-    theftCrossings: (routes: Routes, signal: AbortSignal) => request<Crossings>('/robos-historicos/cruces', signal,
+    theftCrossings: (routes: Routes, signal: AbortSignal) => request<Crossings>('/robos-historicos/cruces?detalle=true', signal,
       Object.fromEntries(routes.features.map(f => [f.properties.id, f.geometry.coordinates]))),
     health: (signal: AbortSignal) => request<Health>('/health', signal),
     config: async (signal: AbortSignal) => {

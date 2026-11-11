@@ -31,9 +31,9 @@ export type Routes = FeatureCollection<MultiLineString, RouteProperties> & {
   };
 };
 export const ROUTE_META: Record<RouteId, { name: string; short: string; color: string; symbol: string; dash?: string }> = {
-  corta: { name: 'Ruta más corta', short: 'Más corta', color: '#175b4b', symbol: '01' },
-  historica: { name: 'Ruta histórica', short: 'Histórica', color: '#955018', symbol: '02', dash: '10 5' },
-  lightgbm: { name: 'Ruta LightGBM', short: 'LightGBM', color: '#6554ac', symbol: '03', dash: '3 6' },
+  corta: { name: 'Más corta', short: 'Más corta', color: '#175b4b', symbol: '01' },
+  historica: { name: 'Menor concentración histórica de siniestros', short: 'Siniestros históricos', color: '#955018', symbol: '02', dash: '10 5' },
+  lightgbm: { name: 'Con estimación de IA', short: 'Con IA', color: '#6554ac', symbol: '03', dash: '3 6' },
 };
 export const format = (value: number, digits = 2) => new Intl.NumberFormat('es-EC', {
   minimumFractionDigits: digits, maximumFractionDigits: digits,

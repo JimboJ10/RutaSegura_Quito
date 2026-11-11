@@ -56,11 +56,11 @@ try {
       const data = await response.json();
       result.routeDistances = data.features?.map(f => f.properties);
       await page.getByRole('heading', { name: 'Tres modalidades de comparación' }).waitFor();
-      for (const name of ['Ruta más corta', 'Ruta histórica', 'Ruta LightGBM']) {
+      for (const name of ['Más corta', 'Menor concentración histórica de siniestros', 'Con estimación de IA']) {
         await page.getByRole('button', { name: new RegExp(name) }).click();
         result.steps['seleccion-' + name] = await measure(page);
       }
-      await page.getByRole('button', { name: /Ruta más corta/ }).click();
+      await page.getByRole('button', { name: /Más corta/ }).click();
       await capture('03-tres-rutas');
       await page.getByRole('button', { name: 'Ver recorrido seleccionado' }).click();
       await capture('04-rutas-en-mapa');
