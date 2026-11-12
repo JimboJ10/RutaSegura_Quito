@@ -61,6 +61,7 @@ export default function App() {
       <a className="brand" href="./" aria-label="RutaInformada Quito, inicio"><span className="brand-symbol"><Icon name="route" /></span><span>RutaInformada<span className="brand-city">QUITO</span></span></a>
       <div className="header-right"><span className="experimental-tag">Explorador peatonal</span><span className={`connection ${demo.error || offline ? 'unavailable' : ''}`} role="status"><span className="live-dot" />{offline ? 'Sin conexión' : demo.loading ? 'Conectando…' : demo.error ? 'API no disponible' : 'Demo conectada'}</span></div>
     </header>
+    <div id="historical-notice-slot" />
     {offline && <div className="offline-banner" role="alert">Sin conexión a la red. Puedes consultar tus recorridos guardados.</div>}
     {library || offline || demo.error ? <main className="library-page">
       {demo.error && !offline && <div><p role="alert">{demo.error}</p><button className="secondary" onClick={demo.retry}>Intentar nuevamente</button></div>}

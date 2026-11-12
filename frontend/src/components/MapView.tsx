@@ -8,6 +8,7 @@ import { format, ROUTE_META } from '../types';
 import type { ApiConfig, Endpoint, Point, Points, PredictionField, Predictions, RouteFeature, RouteId, Routes } from '../types';
 
 import { icons } from './pointIcons';
+import { HistoricalMarker } from './HistoricalMarker';
 function MapBehavior({ target, onPoint, focus, config, route, segments, predictionsVisible, theftVisible }: {
   target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
   focus: { kind: 'zone' | 'route' | 'segments'; serial: number }; config: ApiConfig; route?: RouteFeature; segments?: MultiLineString['coordinates']; predictionsVisible: boolean; theftVisible: boolean;
@@ -26,7 +27,13 @@ function MapBehavior({ target, onPoint, focus, config, route, segments, predicti
     });
   };
   useEffect(() => {
-    const observer = new ResizeObserver(reframe);
+    let noticeHeight = document.getElementById('historical-notice-slot')?.offsetHeight;
+    const observer = new ResizeObserver(() => {
+      const height = document.getElementById('historical-notice-slot')?.offsetHeight;
+      if (height !== noticeHeight) map.invalidateSize({pan:true,animate:false});
+      else reframe();
+      noticeHeight = height;
+    });
     observer.observe(map.getContainer());
     return () => observer.disconnect();
   }, [map]);
@@ -117,9 +124,12 @@ export function MapView({ config, points, target, onPoint, routes, selected, seg
         <Popup>Nodo ajustado: {format(routes.metadata[key].distancia_ajuste_m, 1)} m desde el {key === 'origen_ajustado' ? 'origen' : 'destino'}.</Popup>
       </CircleMarker>)}
       <MapAccessibility />
+      {selectedRoute && <HistoricalMarker key={selected + JSON.stringify(points)} segments={segments}/>}
     </MapContainer>
     <button className="map-center" onClick={onCenter}><Icon name="target" /><span>Centrar zona</span></button>
-    <div className="map-topbar"><span className="map-place"><span className="live-dot" />{zona}</span><button className="layer-button" aria-expanded={layersOpen} aria-controls="layer-settings" onClick={() => setLayersOpen(v => !v)}><Icon name="layers" />Capas</button></div>
+    <div className="map-topbar">{tileError && segmentGeometry ?
+      <button className="layer-button" title="No se pudo cargar parte del mapa base" onClick={() => { setTileError(false); setTileAttempt(v => v+1); }}>Reintentar mapa base</button> :
+      <span className="map-place"><span className="live-dot" />{zona}</span>}<button className="layer-button" aria-expanded={layersOpen} aria-controls="layer-settings" onClick={() => setLayersOpen(v => !v)}><Icon name="layers" />Capas</button></div>
     {layersOpen && <div id="layer-settings" className="layer-settings">
       <div className="layer-heading"><strong>Indicadores por cuadrícula</strong><button className="text-button" onClick={() => setLayersOpen(false)} aria-label="Cerrar opciones de capas">Cerrar</button></div>
       {predictionLoading ? <p role="status">Cargando cuadrículas…</p> : predictionError ? <div role="alert"><p>{predictionError}</p><button className="secondary" onClick={onRetryPredictions}>Reintentar capa</button></div> : <>
@@ -135,7 +145,7 @@ export function MapView({ config, points, target, onPoint, routes, selected, seg
       {showThefts && (theft.grid ? <CellSelector grid={theft.grid} /> : <p role="status">{theft.error || 'Cargando robos históricos…'}</p>)}
     </div>}
     <div className="map-bottom">
-      {tileError && <div className="tile-error" role="status">No se pudo cargar parte del mapa base. <button onClick={() => { setTileError(false); setTileAttempt(v => v + 1); }}>Reintentar mapa</button></div>}
+      {tileError && !segmentGeometry && <div className="tile-error" role="status">No se pudo cargar parte del mapa base. <button onClick={() => { setTileError(false); setTileAttempt(v => v + 1); }}>Reintentar mapa</button></div>}
       {showThefts && theft.grid && <TheftLegend grid={theft.grid} />}
       {visible && predictions && <div className="prediction-legend"><strong>{field === 'pred_historico' ? 'Histórico' : 'LightGBM'} · siniestros estimados / mes</strong><div className="legend-gradient" /><div className="legend-range"><span>{format(range.min)}</span><span>{format(range.max)}</span></div><small>Por celda original de 1 km² · No es probabilidad</small></div>}
       {routes && <div className="route-legend" aria-label="Leyenda de rutas"><span><i style={{borderColor: ROUTE_META[selected].color}} />{ROUTE_META[selected].short}</span>
