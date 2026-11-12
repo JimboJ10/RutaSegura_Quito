@@ -9,6 +9,13 @@ export function Planner({ config, points, target, onTarget, onPoint, onSwap, onR
   onCalculate: () => void; onExample: () => void; loading: boolean; error: string;
 }) {
   const [manualError, setManualError] = useState('');
+  const [west,south,east,north] = config.bbox;
+  const outside = Object.entries(points).filter(([,p]) => p && (p.lon < west || p.lon > east || p.lat < south || p.lat > north)).map(([name]) => name);
+  let guidance = 'Elige otros puntos dentro de la zona disponible o vuelve a intentarlo.';
+  if (error.includes('demasiado lejos')) guidance = outside.length
+    ? 'Fuera de la zona habilitada: ' + outside.join(' y ') + '. Consulta «Ver zona disponible».'
+    : 'Dentro de la zona, el origen o el destino supera el ajuste máximo de ' + config.distancia_maxima_ajuste_m + ' m al nodo peatonal más cercano.';
+  if (error.includes('ruta conectada')) guidance = 'Los dos puntos se ajustaron a la red, pero sus nodos no tienen una conexión peatonal válida.';
   return <section className="planner" aria-label="Planificar recorrido">
     <div className="planner-intro"><p className="eyebrow">QUITO, A PIE</p><h1>Decide tu camino<br /> <span>con datos.</span></h1><p>Compara distancias e indicadores.<br />Elige dos puntos para empezar.</p></div>
     <div className="point-fields">
@@ -43,7 +50,8 @@ export function Planner({ config, points, target, onTarget, onPoint, onSwap, onR
         <button type="submit" className="secondary full-width">Aplicar coordenadas</button>
       </form>
     </details>
-    {error && <div className="error-box" role="alert"><strong>No pudimos calcular el recorrido</strong><p>{error}</p><p>Elige otros puntos dentro de la zona disponible o vuelve a intentarlo.</p></div>}
+    {!error && outside.length > 0 && <p role="status" className="constraint-note">Fuera del límite de la zona: {outside.join(' y ')}. El cálculo utiliza los nodos ajustados de la red.</p>}
+    {error && <div className="error-box" role="alert"><strong>No pudimos calcular el recorrido</strong><p>{guidance}</p><p>{error}</p></div>}
     <button className="primary full-width compare-button" onClick={onCalculate} disabled={!points.origen || !points.destino || loading}>
       {loading ? <><span className="spinner" />Calculando recorridos…</> : <>{error ? 'Intentar nuevamente' : 'Comparar recorridos'}<Icon name="arrow" /></>}
     </button>

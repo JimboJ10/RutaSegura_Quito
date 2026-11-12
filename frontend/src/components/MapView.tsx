@@ -2,27 +2,30 @@ import type { MultiLineString } from 'geojson';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CellSelector, TheftLayer, TheftLegend, useTheftGrid } from './TheftHistory';
 import L from 'leaflet';
-import { MapContainer, TileLayer, GeoJSON, Marker, Popup, CircleMarker, Pane, useMap, useMapEvents, ZoomControl } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, Rectangle, CircleMarker, Pane, useMap, useMapEvents, ZoomControl } from 'react-leaflet';
 import { Icon } from './Icon';
 import { format, ROUTE_META } from '../types';
 import type { ApiConfig, Endpoint, Point, Points, PredictionField, Predictions, RouteFeature, RouteId, Routes } from '../types';
 
 import { icons } from './pointIcons';
 import { HistoricalMarker } from './HistoricalMarker';
-function MapBehavior({ target, onPoint, focus, config, route, segments, predictionsVisible, theftVisible }: {
+function MapBehavior({ target, onPoint, focus, config, route, segments, predictionsVisible, theftVisible, showCoverage }: {
+  showCoverage?: boolean;
   target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
   focus: { kind: 'zone' | 'route' | 'segments'; serial: number }; config: ApiConfig; route?: RouteFeature; segments?: MultiLineString['coordinates']; predictionsVisible: boolean; theftVisible: boolean;
 }) {
   const map = useMapEvents({ click(event) { if (target) onPoint(target, { lat: event.latlng.lat, lon: event.latlng.lng }); } });
   const framing = useRef<{ bounds: L.LatLngBounds; route: boolean } | null>(null);
   const reserve = useRef(90);
-  reserve.current = (predictionsVisible ? 160 : 90) + (theftVisible ? 62 : 0);
+  const viewingBoundary = useRef(false);
+  viewingBoundary.current = !!showCoverage && focus.kind === 'zone';
+  reserve.current = (predictionsVisible ? 160 : viewingBoundary.current ? 66 : 90) + (theftVisible ? 62 : 0);
   const reframe = () => {
     map.invalidateSize({ pan: false });
     if (!framing.current) return;
     const compactRoute = map.getSize().x < 768 && framing.current.route && reserve.current === 90;
     map.fitBounds(framing.current.bounds, {
-      paddingTopLeft: compactRoute ? [28, 78] : [42, 110], paddingBottomRight: compactRoute ? [55, 42] : [66, reserve.current],
+      paddingTopLeft: viewingBoundary.current ? [20,62] : compactRoute ? [28, 78] : [42, 110], paddingBottomRight: compactRoute ? [55, 42] : [66, reserve.current],
       maxZoom: framing.current.route ? 17 : 15, animate: false,
     });
   };
@@ -72,7 +75,8 @@ function MapAccessibility() {
   }, [map]);
   return null;
 }
-export function MapView({ config, points, target, onPoint, routes, selected, segments, onSelect, focus, onCenter, predictions, predictionLoading, predictionError, onRetryPredictions }: {
+export function MapView({ showCoverage, config, points, target, onPoint, routes, selected, segments, onSelect, focus, onCenter, predictions, predictionLoading, predictionError, onRetryPredictions }: {
+  showCoverage?: boolean;
   segments?: MultiLineString['coordinates'];
   config: ApiConfig; points: Points; target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
   routes: Routes | null; selected: RouteId; onSelect: (id: RouteId) => void;
@@ -101,7 +105,9 @@ export function MapView({ config, points, target, onPoint, routes, selected, seg
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores'
         eventHandlers={{ tileerror: () => setTileError(true) }} />
       <ZoomControl position="bottomright" zoomInTitle="Acercar mapa" zoomOutTitle="Alejar mapa" />
-      <MapBehavior config={config} target={target} onPoint={onPoint} focus={focus} route={selectedRoute} segments={segments} predictionsVisible={visible} theftVisible={showThefts && !!theft.grid} />
+      {showCoverage && <Rectangle bounds={[[south,west],[north,east]]} interactive={false} className="coverage-boundary"
+        pathOptions={{color:'#135b73',weight:3,dashArray:'8 5',fillOpacity:0.06}}/>}
+      <MapBehavior showCoverage={showCoverage} config={config} target={target} onPoint={onPoint} focus={focus} route={selectedRoute} segments={segments} predictionsVisible={visible} theftVisible={showThefts && !!theft.grid} />
       <Pane name="prediction-grid" style={{ zIndex: 350 }}>
       {visible && predictions && <GeoJSON key={field} data={predictions} pane="prediction-grid" interactive={false} style={feature => {
         const value = feature?.properties[field] ?? range.min;
@@ -127,7 +133,7 @@ export function MapView({ config, points, target, onPoint, routes, selected, seg
       {selectedRoute && <HistoricalMarker key={selected + JSON.stringify(points)} segments={segments}/>}
     </MapContainer>
     <button className="map-center" onClick={onCenter}><Icon name="target" /><span>Centrar zona</span></button>
-    <div className="map-topbar">{tileError && segmentGeometry ?
+    <div className="map-topbar">{tileError && (segmentGeometry || showCoverage) ?
       <button className="layer-button" title="No se pudo cargar parte del mapa base" onClick={() => { setTileError(false); setTileAttempt(v => v+1); }}>Reintentar mapa base</button> :
       <span className="map-place"><span className="live-dot" />{zona}</span>}<button className="layer-button" aria-expanded={layersOpen} aria-controls="layer-settings" onClick={() => setLayersOpen(v => !v)}><Icon name="layers" />Capas</button></div>
     {layersOpen && <div id="layer-settings" className="layer-settings">
@@ -145,7 +151,7 @@ export function MapView({ config, points, target, onPoint, routes, selected, seg
       {showThefts && (theft.grid ? <CellSelector grid={theft.grid} /> : <p role="status">{theft.error || 'Cargando robos históricos…'}</p>)}
     </div>}
     <div className="map-bottom">
-      {tileError && !segmentGeometry && <div className="tile-error" role="status">No se pudo cargar parte del mapa base. <button onClick={() => { setTileError(false); setTileAttempt(v => v + 1); }}>Reintentar mapa</button></div>}
+      {tileError && !segmentGeometry && !showCoverage && <div className="tile-error" role="status">No se pudo cargar parte del mapa base. <button onClick={() => { setTileError(false); setTileAttempt(v => v + 1); }}>Reintentar mapa</button></div>}
       {showThefts && theft.grid && <TheftLegend grid={theft.grid} />}
       {visible && predictions && <div className="prediction-legend"><strong>{field === 'pred_historico' ? 'Histórico' : 'LightGBM'} · siniestros estimados / mes</strong><div className="legend-gradient" /><div className="legend-range"><span>{format(range.min)}</span><span>{format(range.max)}</span></div><small>Por celda original de 1 km² · No es probabilidad</small></div>}
       {routes && <div className="route-legend" aria-label="Leyenda de rutas"><span><i style={{borderColor: ROUTE_META[selected].color}} />{ROUTE_META[selected].short}</span>

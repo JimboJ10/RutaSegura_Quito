@@ -17,6 +17,7 @@ const DESCRIPTION = 'Aplicación web experimental que permite comparar rutas pea
 export default function App() {
   const demo = useDemo();
   const planner = useRoutePlanner();
+  const [showCoverage, setShowCoverage] = useState(false);
   const [target, setTarget] = useState<Endpoint | null>('origen');
   const [expanded, setExpanded] = useState(() => window.innerWidth >= 768);
   const [selected, setSelected] = useState<RouteId>('corta');
@@ -61,6 +62,16 @@ export default function App() {
       <a className="brand" href="./" aria-label="RutaInformada Quito, inicio"><span className="brand-symbol"><Icon name="route" /></span><span>RutaInformada<span className="brand-city">QUITO</span></span></a>
       <div className="header-right"><span className="experimental-tag">Explorador peatonal</span><span className={`connection ${demo.error || offline ? 'unavailable' : ''}`} role="status"><span className="live-dot" />{offline ? 'Sin conexión' : demo.loading ? 'Conectando…' : demo.error ? 'API no disponible' : 'Demo conectada'}</span></div>
     </header>
+    {!offline && !library && !demo.error && <section className="coverage-strip" aria-label="Cobertura peatonal">
+      <div><strong>{demo.config?.zona_demo === 'Zona ampliada · Quito' ? 'Cobertura ampliada experimental' : 'Zona piloto: centro-norte de Quito'}</strong>
+        {showCoverage ? <p>El contorno delimita la zona de consulta. Dentro de ella, ambos puntos necesitan un nodo a {demo.config?.distancia_maxima_ajuste_m} m o menos y una conexión peatonal entre ellos.</p> :
+          !routes && <p>Actualmente puedes consultar recorridos peatonales únicamente dentro de la zona habilitada. La cobertura se ampliará en futuras versiones.</p>}
+        {!routes && !showCoverage && <small>{demo.config?.zona_demo === 'Zona de demostración de Quito' && '≈ 19,13 km² · '}Solo entre puntos conectados por la red peatonal.</small>}</div>
+      {demo.config && <button className="secondary" aria-pressed={showCoverage} onClick={() => {
+        setShowCoverage(!showCoverage);
+        if (!showCoverage) { center('zone'); if (window.innerWidth < 768) setExpanded(false); }
+      }}>{showCoverage ? 'Ocultar límite' : 'Ver zona disponible'}</button>}
+    </section>}
     <div id="historical-notice-slot" />
     {offline && <div className="offline-banner" role="alert">Sin conexión a la red. Puedes consultar tus recorridos guardados.</div>}
     {library || offline || demo.error ? <main className="library-page">
@@ -96,7 +107,7 @@ export default function App() {
           <p className="panel-footnote"><Icon name="info" />Ajuste máximo a la red: {demo.config.distancia_maxima_ajuste_m} m. Sin cálculo de accesos peatonales.</p>
         </div>
       </aside>
-      <MapView config={demo.config} points={planner.points} target={target} onPoint={choosePoint} routes={routes}
+      <MapView showCoverage={showCoverage} config={demo.config} points={planner.points} target={target} onPoint={choosePoint} routes={routes}
         selected={selected} segments={highlight ? history?.[selected].tramos : undefined} onSelect={setSelected} focus={focus} onCenter={() => center('zone')}
         predictions={demo.predictions} predictionLoading={demo.predictionLoading} predictionError={demo.predictionError} onRetryPredictions={demo.retryPredictions} />
     </main>}

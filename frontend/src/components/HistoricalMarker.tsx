@@ -34,6 +34,7 @@ export function HistoricalMarker({segments}: {segments?: MultiLineString['coordi
   const announced = useRef(false);
   const marker = useRef<L.Marker>(null);
   const [opening, setOpening] = useState(0);
+  const [details, setDetails] = useState(false);
   useEffect(() => {
     if (available && !announced.current) {
       announced.current = true;
@@ -41,10 +42,10 @@ export function HistoricalMarker({segments}: {segments?: MultiLineString['coordi
     }
   }, [available]);
   useEffect(() => {
-    if (!opening) return;
+    if (!opening || details) return;
     const timer = window.setTimeout(() => setOpening(0), 5000);
     return () => clearTimeout(timer);
-  }, [opening]);
+  }, [opening, details]);
   const slot = document.getElementById('historical-notice-slot');
   if (!anchor) return null;
   return <>
@@ -58,11 +59,13 @@ export function HistoricalMarker({segments}: {segments?: MultiLineString['coordi
           }
         };
       }}}/>
-    {slot && opening > 0 && createPortal(<div className="historical-notice">
-      <div role="status"><strong>Información histórica: este recorrido atraviesa una zona con mayor concentración de robos registrados entre 2019 y 2022.</strong>
+    {slot && opening > 0 && createPortal(<div className={'historical-notice' + (details ? ' notice-expanded' : '')}>
+      <strong className="notice-summary" role="status">Zona con más registros de robos · 2019–2022</strong>
+      <button className="notice-details" aria-expanded={details} aria-controls="historical-full" onClick={() => setDetails(!details)}>{details ? 'Ver menos' : 'Ver detalles'}</button>
+      <div role="status" id="historical-full"><strong>Información histórica: este recorrido atraviesa una zona con mayor concentración de robos registrados entre 2019 y 2022.</strong>
       <small>No representa peligro actual ni identifica el lugar exacto de un delito</small></div>
       <button aria-label="Cerrar información histórica" onClick={() => {
-        setOpening(0); marker.current?.getElement()?.focus({preventScroll:true});
+        setDetails(false); setOpening(0); marker.current?.getElement()?.focus({preventScroll:true});
       }}>×</button>
     </div>,slot)}
   </>;
