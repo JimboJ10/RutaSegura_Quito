@@ -20,6 +20,13 @@ red_vial/
 resultados/
 entregas/
 
+# Evidencias locales de pruebas y auditorías
+/backend/evidencias/
+/frontend/evidencias/
+*.pem
+*.key
+*.pfx
+
 # Modelos y datos geoespaciales
 *.joblib
 *.graphml

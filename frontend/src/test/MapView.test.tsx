@@ -10,6 +10,7 @@ const originalSvg = Object.getOwnPropertyDescriptor(L.Browser, 'svg')!;
 beforeEach(() => {
   Object.defineProperty(L.Browser, 'svg', { ...originalSvg, value: true });
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  vi.stubGlobal('matchMedia', () => ({matches: false, addEventListener() {}, removeEventListener() {}}));
 });
 afterEach(() => { cleanup(); Object.defineProperty(L.Browser, 'svg', originalSvg); vi.unstubAllGlobals(); });
 function props() {

@@ -1,5 +1,6 @@
 import type { MultiLineString } from 'geojson';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CellSelector, TheftLayer, TheftLegend, useTheftGrid } from './TheftHistory';
 import L from 'leaflet';
 import { MapContainer, TileLayer, GeoJSON, Marker, Popup, Rectangle, CircleMarker, Pane, useMap, useMapEvents, ZoomControl } from 'react-leaflet';
@@ -9,6 +10,31 @@ import type { ApiConfig, Endpoint, Point, Points, PredictionField, Predictions, 
 
 import { icons } from './pointIcons';
 import { HistoricalMarker } from './HistoricalMarker';
+import { ExpandButton, useMapExpansion } from './MapExpansion';
+
+function CenterControl({ onCenter }: { onCenter: () => void }) {
+  const map = useMap();
+  const [host] = useState(() => L.DomUtil.create('div', 'center-control'));
+  useEffect(() => {
+    const mobile = window.matchMedia('(max-width:767px)');
+    const position = () => mobile.matches ? 'bottomright' : 'topleft';
+    const control = new L.Control({ position: position() });
+    control.onAdd = () => host;
+    L.DomEvent.disableClickPropagation(host);
+    control.addTo(map);
+    const move = () => control.setPosition(position());
+    mobile.addEventListener('change', move);
+    return () => {
+      mobile.removeEventListener('change', move);
+      control.remove();
+      L.DomEvent.off(host);
+    };
+  }, [host, map]);
+  return createPortal(<button className="map-center" onClick={onCenter}>
+    <Icon name="target" /><span>Centrar zona</span>
+  </button>, host);
+}
+
 function MapBehavior({ target, onPoint, focus, config, route, segments, predictionsVisible, theftVisible, showCoverage }: {
   showCoverage?: boolean;
   target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
@@ -23,19 +49,24 @@ function MapBehavior({ target, onPoint, focus, config, route, segments, predicti
   const reframe = () => {
     map.invalidateSize({ pan: false });
     if (!framing.current) return;
-    const compactRoute = map.getSize().x < 768 && framing.current.route && reserve.current === 90;
+    const size = map.getSize();
+    const compactRoute = size.x < 768 && framing.current.route;
+    const top = viewingBoundary.current ? 62 : compactRoute ? 78 : 110;
+    const bottom = compactRoute && reserve.current === 90 ? 42 : reserve.current;
     map.fitBounds(framing.current.bounds, {
-      paddingTopLeft: viewingBoundary.current ? [20,62] : compactRoute ? [28, 78] : [42, 110], paddingBottomRight: compactRoute ? [55, 42] : [66, reserve.current],
+      paddingTopLeft: [viewingBoundary.current ? 20 : compactRoute ? 28 : 42, top],
+      // Leaflet necesita altura positiva incluso con el panel y las leyendas abiertos.
+      paddingBottomRight: [compactRoute ? 55 : 66, Math.max(0, Math.min(bottom, size.y - top - 64))],
       maxZoom: framing.current.route ? 17 : 15, animate: false,
     });
   };
   useEffect(() => {
-    let noticeHeight = document.getElementById('historical-notice-slot')?.offsetHeight;
+    let wide = !!map.getContainer().closest('.expanded-map');
     const observer = new ResizeObserver(() => {
-      const height = document.getElementById('historical-notice-slot')?.offsetHeight;
-      if (height !== noticeHeight) map.invalidateSize({pan:true,animate:false});
+      const nowWide = !!map.getContainer().closest('.expanded-map');
+      if (wide !== nowWide) map.invalidateSize({pan:true,animate:false});
       else reframe();
-      noticeHeight = height;
+      wide = nowWide;
     });
     observer.observe(map.getContainer());
     return () => observer.disconnect();
@@ -75,7 +106,9 @@ function MapAccessibility() {
   }, [map]);
   return null;
 }
-export function MapView({ showCoverage, config, points, target, onPoint, routes, selected, segments, onSelect, focus, onCenter, predictions, predictionLoading, predictionError, onRetryPredictions }: {
+export function MapView({ showCoverage, onToggleCoverage, config, points, target, onTarget, onCompare, onPoint, routes, selected, segments, onSelect, focus, onCenter, predictions, predictionLoading, predictionError, onRetryPredictions }: {
+  onTarget?: (target:Endpoint)=>void; onCompare?:()=>void;
+  onToggleCoverage?: () => void;
   showCoverage?: boolean;
   segments?: MultiLineString['coordinates'];
   config: ApiConfig; points: Points; target: Endpoint | null; onPoint: (endpoint: Endpoint, point: Point) => void;
@@ -84,6 +117,7 @@ export function MapView({ showCoverage, config, points, target, onPoint, routes,
   predictions: Predictions | null; predictionLoading: boolean; predictionError: string; onRetryPredictions: () => void;
 }) {
   const [showThefts, setShowThefts] = useState(false);
+  const view = useMapExpansion();
   const theft = useTheftGrid(showThefts);
   const [visible, setVisible] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
@@ -99,12 +133,14 @@ export function MapView({ showCoverage, config, points, target, onPoint, routes,
   const segmentGeometry: MultiLineString | undefined = segments?.length ? {type:'MultiLineString', coordinates:segments} : undefined;
   const outline: L.PolylineOptions = {smoothFactor:0, color:'#a63845', weight:11, opacity:.88, lineCap:'butt'};
   const selectedRoute = routes?.features.find(f => f.properties.id === selected);
-  return <section className={`map-region ${target ? 'picking' : ''}`} aria-label="Mapa y capas">
+  return <section ref={view.region} role={view.expanded?'dialog':undefined} aria-modal={view.expanded || undefined} className={`map-region ${view.expanded?'expanded-map':''} ${target ? 'picking' : ''}`} aria-label="Mapa y capas">
+    <div id="expanded-history-slot"/>
     <MapContainer bounds={[[south, west], [north, east]]} zoomControl={false} className="map-canvas" minZoom={11} maxZoom={19}>
       <TileLayer key={tileAttempt} url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores'
         eventHandlers={{ tileerror: () => setTileError(true) }} />
       <ZoomControl position="bottomright" zoomInTitle="Acercar mapa" zoomOutTitle="Alejar mapa" />
+      <CenterControl onCenter={onCenter}/>
       {showCoverage && <Rectangle bounds={[[south,west],[north,east]]} interactive={false} className="coverage-boundary"
         pathOptions={{color:'#135b73',weight:3,dashArray:'8 5',fillOpacity:0.06}}/>}
       <MapBehavior showCoverage={showCoverage} config={config} target={target} onPoint={onPoint} focus={focus} route={selectedRoute} segments={segments} predictionsVisible={visible} theftVisible={showThefts && !!theft.grid} />
@@ -130,14 +166,17 @@ export function MapView({ showCoverage, config, points, target, onPoint, routes,
         <Popup>Nodo ajustado: {format(routes.metadata[key].distancia_ajuste_m, 1)} m desde el {key === 'origen_ajustado' ? 'origen' : 'destino'}.</Popup>
       </CircleMarker>)}
       <MapAccessibility />
-      {selectedRoute && <HistoricalMarker key={selected + JSON.stringify(points)} segments={segments}/>}
+      {selectedRoute && <HistoricalMarker key={selected + JSON.stringify(points)} segments={segments} expanded={view.expanded}/>}
     </MapContainer>
-    <button className="map-center" onClick={onCenter}><Icon name="target" /><span>Centrar zona</span></button>
-    <div className="map-topbar">{tileError && (segmentGeometry || showCoverage) ?
+    <div className="map-topbar"><ExpandButton view={view}/>{tileError && (segmentGeometry || showCoverage) ?
       <button className="layer-button" title="No se pudo cargar parte del mapa base" onClick={() => { setTileError(false); setTileAttempt(v => v+1); }}>Reintentar mapa base</button> :
       <span className="map-place"><span className="live-dot" />{zona}</span>}<button className="layer-button" aria-expanded={layersOpen} aria-controls="layer-settings" onClick={() => setLayersOpen(v => !v)}><Icon name="layers" />Capas</button></div>
     {layersOpen && <div id="layer-settings" className="layer-settings">
       <div className="layer-heading"><strong>Indicadores por cuadrícula</strong><button className="text-button" onClick={() => setLayersOpen(false)} aria-label="Cerrar opciones de capas">Cerrar</button></div>
+      {view.expanded && onToggleCoverage && <button className="secondary" aria-pressed={showCoverage}
+        onClick={() => { onToggleCoverage(); setLayersOpen(false); }}>
+        {showCoverage ? 'Ocultar límite' : 'Ver zona disponible'}
+      </button>}
       {predictionLoading ? <p role="status">Cargando cuadrículas…</p> : predictionError ? <div role="alert"><p>{predictionError}</p><button className="secondary" onClick={onRetryPredictions}>Reintentar capa</button></div> : <>
         <label className="switch-label"><input type="checkbox" checked={visible} onChange={event => setVisible(event.target.checked)} disabled={!predictions} /><span>Mostrar {predictions?.features.length ?? 0} cuadrículas</span></label>
         <label className="field-label" htmlFor="prediction-field">Indicador</label><select id="prediction-field" value={field} onChange={event => setField(event.target.value as PredictionField)}>
@@ -151,6 +190,9 @@ export function MapView({ showCoverage, config, points, target, onPoint, routes,
       {showThefts && (theft.grid ? <CellSelector grid={theft.grid} /> : <p role="status">{theft.error || 'Cargando robos históricos…'}</p>)}
     </div>}
     <div className="map-bottom">
+      {view.expanded && <div className="map-edit"><button aria-pressed={target==='origen'} onClick={()=>onTarget?.('origen')}>A · Origen</button>
+        <button aria-pressed={target==='destino'} onClick={()=>onTarget?.('destino')}>B · Destino</button>
+        {!routes && <button disabled={!points.origen || !points.destino} onClick={()=>{view.setExpanded(false);onCompare?.();}}>Comparar recorridos</button>}</div>}
       {tileError && !segmentGeometry && !showCoverage && <div className="tile-error" role="status">No se pudo cargar parte del mapa base. <button onClick={() => { setTileError(false); setTileAttempt(v => v + 1); }}>Reintentar mapa</button></div>}
       {showThefts && theft.grid && <TheftLegend grid={theft.grid} />}
       {visible && predictions && <div className="prediction-legend"><strong>{field === 'pred_historico' ? 'Histórico' : 'LightGBM'} · siniestros estimados / mes</strong><div className="legend-gradient" /><div className="legend-range"><span>{format(range.min)}</span><span>{format(range.max)}</span></div><small>Por celda original de 1 km² · No es probabilidad</small></div>}

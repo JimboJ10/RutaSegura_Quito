@@ -276,3 +276,27 @@ node scripts/test-pwa.mjs
 ```
 
 La prueba usa un perfil temporal y los puertos locales 4193 y 8893. Inicia y detiene sus propios servidores de vista previa y FastAPI. Verifica instalación, persistencia entre sesiones de navegador, cuota, consulta sin servidores, recuperación del piloto, lista de archivos precargados y eliminación. Los archivos de prueba quedan en `test-results/pwa`, excluido de Git.
+## Calles de referencia en recorridos guardados
+
+La PWA incluye `public/calles-piloto.geojson`, una geometría MultiLineString en longitud y latitud (EPSG:4326). Representa las calles y senderos presentes en el grafo peatonal filtrado de la zona piloto del centro-norte de Quito, aproximadamente 19,13 km². La cobertura es parcial. La selección y el dibujo de una línea no acreditan su transitabilidad física.
+
+**Procedencia y licencia.** © OpenStreetMap contributors. La base de datos vectorial derivada se ofrece bajo Open Data Commons Open Database License 1.0. El GeoJSON se puede obtener en la misma instalación, en `/calles-piloto.geojson`. [Fuente y atribución](https://www.openstreetmap.org/copyright) · [Texto de la ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+
+Desde la raíz del proyecto, con los insumos locales del MVP:
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\generar_calles_offline.py
+```
+
+El generador comprueba la versión y el SHA-256 de `red_vial/acceso_peatonal_v1/quito_demo_peatonal_filtrado.graphml` mediante el manifiesto del MVP. Usa la misma interpretación de geometrías y extremos que el backend. De las 43.248 aristas extrae solo coordenadas, deduplica cada segmento incluyendo el sentido inverso y une segmentos contiguos por nodos de grado dos. Simplifica con una tolerancia de 0,000008 grados y redondea a seis decimales, preservando las líneas cortas que colapsarían al redondear. La comprobación de distancia de Hausdorff entre cada cadena y su salida dio un máximo aproximado de 0,94 m en esta latitud.
+
+| Representación | Bytes |
+|---|---:|
+| GraphML local de origen | 24.937.786 |
+| GeoJSON de geometrías antes de deduplicar y simplificar | 4.027.502 |
+| GeoJSON entregado, 20.583 cadenas | 1.184.062 |
+| Mismo archivo medido con gzip | 203.331 |
+
+El tamaño permite precargar toda la zona en una petición y consultarla al abrir cualquier copia guardada. El tamaño gzip mide la compresión posible. La transferencia efectiva depende de la compresión HTTP del servidor. La aplicación incorpora los bytes del archivo al hash de revisión de la precaché. Un cambio entra en vigor cuando el nuevo service worker completa la instalación y se activa tras cerrar las pestañas de la revisión anterior.
+
+Con conexión, Leaflet solicita las teselas normales para la vista. Sin conexión o si falla la carga de teselas, el detalle guardado dibuja las calles locales por debajo del recorrido. La lista cerrada de la precaché incluye el GeoJSON local y los recursos de la interfaz. Excluye peticiones a proveedores de teselas y datasets de seguridad. Guardar recorridos sigue siendo voluntario e independiente de la cartografía.

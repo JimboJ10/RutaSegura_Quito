@@ -18,6 +18,7 @@ export default function App() {
   const demo = useDemo();
   const planner = useRoutePlanner();
   const [showCoverage, setShowCoverage] = useState(false);
+  const [coverageInfo, setCoverageInfo] = useState(false);
   const [target, setTarget] = useState<Endpoint | null>('origen');
   const [expanded, setExpanded] = useState(() => window.innerWidth >= 768);
   const [selected, setSelected] = useState<RouteId>('corta');
@@ -37,6 +38,13 @@ export default function App() {
     info.scrollTop = 0;
   };
   const center = (kind: 'zone' | 'route' | 'segments') => setFocus(previous => ({ kind, serial: previous.serial + 1 }));
+  const toggleCoverage = () => {
+    setShowCoverage(!showCoverage);
+    if (!showCoverage) {
+      center('zone');
+      if (window.innerWidth < 768) setExpanded(false);
+    }
+  };
   useEffect(() => {
     const online = () => setOffline(false);
     const offline = () => setOffline(true);
@@ -56,6 +64,7 @@ export default function App() {
     planner.setPoint(endpoint, point);
     setTarget(endpoint === 'origen' && !planner.points.destino ? 'destino' : null);
   };
+  const compare = () => { setSelected('corta'); setTarget(null); setExpanded(true); void planner.calculate(); };
   return <div className="app-shell">
     <a className="skip-link" href="#journey-panel">Ir al panel de recorridos</a>
     <header className="app-header">
@@ -64,13 +73,10 @@ export default function App() {
     </header>
     {!offline && !library && !demo.error && <section className="coverage-strip" aria-label="Cobertura peatonal">
       <div><strong>{demo.config?.zona_demo === 'Zona ampliada · Quito' ? 'Cobertura ampliada experimental' : 'Zona piloto: centro-norte de Quito'}</strong>
-        {showCoverage ? <p>El contorno delimita la zona de consulta. Dentro de ella, ambos puntos necesitan un nodo a {demo.config?.distancia_maxima_ajuste_m} m o menos y una conexión peatonal entre ellos.</p> :
-          !routes && <p>Actualmente puedes consultar recorridos peatonales únicamente dentro de la zona habilitada. La cobertura se ampliará en futuras versiones.</p>}
-        {!routes && !showCoverage && <small>{demo.config?.zona_demo === 'Zona de demostración de Quito' && '≈ 19,13 km² · '}Solo entre puntos conectados por la red peatonal.</small>}</div>
-      {demo.config && <button className="secondary" aria-pressed={showCoverage} onClick={() => {
-        setShowCoverage(!showCoverage);
-        if (!showCoverage) { center('zone'); if (window.innerWidth < 768) setExpanded(false); }
-      }}>{showCoverage ? 'Ocultar límite' : 'Ver zona disponible'}</button>}
+        {demo.config?.zona_demo === 'Zona de demostración de Quito' && <small>≈ 19,13 km²</small>}</div>
+      <button className="coverage-info" aria-expanded={coverageInfo} aria-controls="coverage-copy" onClick={()=>setCoverageInfo(!coverageInfo)}>Información de cobertura</button>
+      {demo.config && <button className="secondary" aria-pressed={showCoverage} onClick={toggleCoverage}>{showCoverage ? 'Ocultar límite' : 'Ver zona disponible'}</button>}
+      <p id="coverage-copy" hidden={!coverageInfo}>Actualmente puedes consultar recorridos peatonales únicamente dentro de la zona habilitada. Dentro del límite, ambos puntos necesitan un nodo a {demo.config?.distancia_maxima_ajuste_m ?? 300} m o menos y una conexión peatonal entre ellos. La cobertura se ampliará en futuras versiones.</p>
     </section>}
     <div id="historical-notice-slot" />
     {offline && <div className="offline-banner" role="alert">Sin conexión a la red. Puedes consultar tus recorridos guardados.</div>}
@@ -93,7 +99,7 @@ export default function App() {
             onTarget={endpoint => { setTarget(endpoint); if (window.innerWidth < 768) setExpanded(false); }}
             onPoint={choosePoint} onSwap={() => { planner.swap(); setTarget(null); }}
             onReset={() => { planner.reset(); setTarget('origen'); center('zone'); }}
-            onCalculate={() => { setSelected('corta'); setTarget(null); void planner.calculate(); }}
+            onCalculate={compare}
             onExample={() => {
               planner.setPoint('origen', { lat: -0.201, lon: -78.504 });
               planner.setPoint('destino', { lat: -0.184, lon: -78.486 });
@@ -107,7 +113,7 @@ export default function App() {
           <p className="panel-footnote"><Icon name="info" />Ajuste máximo a la red: {demo.config.distancia_maxima_ajuste_m} m. Sin cálculo de accesos peatonales.</p>
         </div>
       </aside>
-      <MapView showCoverage={showCoverage} config={demo.config} points={planner.points} target={target} onPoint={choosePoint} routes={routes}
+      <MapView showCoverage={showCoverage} onToggleCoverage={toggleCoverage} config={demo.config} points={planner.points} target={target} onPoint={choosePoint} onTarget={setTarget} onCompare={compare} routes={routes}
         selected={selected} segments={highlight ? history?.[selected].tramos : undefined} onSelect={setSelected} focus={focus} onCenter={() => center('zone')}
         predictions={demo.predictions} predictionLoading={demo.predictionLoading} predictionError={demo.predictionError} onRetryPredictions={demo.retryPredictions} />
     </main>}

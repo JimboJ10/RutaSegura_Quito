@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { GeoJSON, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import { GeoJSON, MapContainer, Marker, Pane, TileLayer, useMap } from 'react-leaflet';
+import type { MultiLineString } from 'geojson';
 import { icons } from './pointIcons';
 import { shellStatus } from '../pwa';
 import L from 'leaflet';
@@ -8,6 +9,9 @@ import type { SavedTrip } from '../savedTrips';
 import { format, periodLabel, ROUTE_META } from '../types';
 import type { Points, RouteFeature, RouteId, Routes } from '../types';
 import { TheftMetrics } from './RouteResults';
+import { ExpandButton, useMapExpansion } from './MapExpansion';
+
+const streetCredit = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> · <a href="https://opendatacommons.org/licenses/odbl/1-0/">ODbL</a>';
 
 export function SaveTripButton({ points, routes }: { points: Points; routes: Routes }) {
   const [state, setState] = useState<'idle' | 'saving' | 'done'>('idle');
@@ -39,7 +43,12 @@ function FrameSavedRoute({feature, points}: {feature: RouteFeature; points: Save
       map.fitBounds(bounds, {paddingTopLeft:[28,52], paddingBottomRight:[28,30], maxZoom:18, animate:false});
     };
     fit();
-    const observer = new ResizeObserver(fit);
+    let wide = !!map.getContainer().closest('.expanded-map');
+    const observer = new ResizeObserver(() => {
+      const next = !!map.getContainer().closest('.expanded-map');
+      if (next !== wide) map.invalidateSize({pan:true,animate:false}); else fit();
+      wide = next;
+    });
     observer.observe(map.getContainer());
     return () => observer.disconnect();
   }, [map, feature, points]);
@@ -47,8 +56,27 @@ function FrameSavedRoute({feature, points}: {feature: RouteFeature; points: Save
 }
 
 function SavedDetail({trip}: {trip: SavedTrip}) {
+  const view = useMapExpansion();
   const [online, setOnline] = useState(navigator.onLine);
   const [tileError, setTileError] = useState(false);
+  const local = !online || tileError;
+  const [streets, setStreets] = useState<MultiLineString | null>(null);
+  const [streetError, setStreetError] = useState(false);
+  useEffect(() => {
+    if (!local || streets) return;
+    const controller = new AbortController();
+    setStreetError(false);
+    async function load() {
+      const response = await fetch('/calles-piloto.geojson', {signal:controller.signal});
+      if (!response.ok) throw new Error('Cartografía local no disponible');
+      const data = await response.json();
+      if (data.type !== 'MultiLineString' || !Array.isArray(data.coordinates) || !data.coordinates.length)
+        throw new Error('Cartografía local inválida');
+      if (!controller.signal.aborted) setStreets(data);
+    }
+    load().catch(() => { if (!controller.signal.aborted) setStreetError(true); });
+    return () => controller.abort();
+  }, [local, streets]);
   useEffect(() => {
     const sync = () => { setOnline(navigator.onLine); setTileError(false); };
     window.addEventListener('online', sync);
@@ -59,27 +87,37 @@ function SavedDetail({trip}: {trip: SavedTrip}) {
   const f = trip.routes.features.find(f => f.properties.id === selected)!;
   return <article className="saved-detail"><h2>Copia guardada</h2>
     <p>Guardado el {new Date(trip.savedAt).toLocaleString('es-EC')} · Datos de {periodLabel(trip.routes.metadata.periodo)}</p>
-    <p>Origen {trip.points.origen.lat}, {trip.points.origen.lon} · Destino {trip.points.destino.lat}, {trip.points.destino.lon}</p>
+    <section ref={view.region} className={'saved-stage '+(view.expanded?'expanded-map':'')} role={view.expanded?'dialog':undefined} aria-modal={view.expanded || undefined} aria-label="Mapa del recorrido guardado">
+    <div className="saved-map-title"><strong>Recorrido guardado</strong><ExpandButton view={view}/></div>
     <div className="saved-options">{trip.routes.features.map(({properties:r}) =>
-      <button className="secondary" key={r.id} aria-pressed={selected === r.id} onClick={() => select(r.id)}>
-        {ROUTE_META[r.id].name} · {format(r.distancia_km,3)} km</button>)}</div>
+      <button className="secondary" key={r.id} aria-label={ROUTE_META[r.id].name+' · '+format(r.distancia_km,3)+' km'} aria-pressed={selected === r.id} onClick={() => select(r.id)}>
+        {ROUTE_META[r.id].short} · {format(r.distancia_km,3)} km</button>)}</div>
     <MapContainer className="saved-map" maxZoom={19}
       scrollWheelZoom={false} aria-label="Geometría guardada">
       <FrameSavedRoute feature={f} points={trip.points}/>
+      {local && streets && <Pane name="saved-streets" style={{zIndex:350,pointerEvents:'none'}}>
+        <GeoJSON data={streets} pane="saved-streets" interactive={false}
+          attribution={streetCredit}
+          style={{color:'#7e8c88',weight:1.2,opacity:.65}}/>
+      </Pane>}
       {online && !tileError && <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores'
+        attribution={streetCredit}
         eventHandlers={{tileerror: () => setTileError(true)}}/>}
       <GeoJSON key={selected} data={f} style={{color: ROUTE_META[selected].color, weight:5, dashArray: ROUTE_META[selected].dash}}/>
       {(['origen','destino'] as const).map(key => <Marker key={key} icon={icons[key]}
         position={[trip.points[key].lat,trip.points[key].lon]} title={key === 'origen' ? 'A · Origen solicitado' : 'B · Destino solicitado'}/>)}
     </MapContainer>
-    {(!online || tileError) && <p role="status">Mapa de calles no disponible sin conexión. Tu recorrido sigue guardado
+    {local && <p role="status">{streetError ? 'Cartografía local no disponible. Tu recorrido sigue guardado.' :
+      streets ? 'Calles de referencia de la zona piloto · Mapa simplificado. La cobertura es parcial y la transitabilidad física no está verificada.' : 'Cargando calles de referencia…'}
       {online && <button className="text-button" onClick={() => setTileError(false)}>Reintentar mapa</button>}</p>}
+    </section>
     <p>Trazado guardado entre nodos ajustados · {ROUTE_META[selected].name}</p>
     {f.properties.comparacion_robos && <TheftMetrics data={f.properties.comparacion_robos}/>}
+    <details className="saved-more"><summary>Más información</summary>
+    <p>Origen {trip.points.origen.lat}, {trip.points.origen.lon} · Destino {trip.points.destino.lat}, {trip.points.destino.lon}</p>
     <p>Desvío {format(f.properties.desvio_pct)} % · Índice histórico {format(f.properties.indice_historico,4)} · Índice LightGBM {format(f.properties.indice_lightgbm,4)}</p>
     <p>Los índices miden concentración estimada ponderada por longitud. Las modalidades pueden compartir el mismo trazado.</p>
-    <p>{trip.routes.metadata.advertencia}</p></article>;
+    <p>{trip.routes.metadata.advertencia}</p></details></article>;
 }
 
 export function SavedLibrary() {

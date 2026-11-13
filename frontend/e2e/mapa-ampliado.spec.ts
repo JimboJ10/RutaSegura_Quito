@@ -1,0 +1,60 @@
+import { test,expect } from '@playwright/test';
+import { resolve } from 'node:path';
+import { mkdir } from 'node:fs/promises';
+import { expandPanel } from './audit-helpers.mjs';
+
+test('mapa ampliado conserva cámara, puntos y recorridos',async({page},info)=>{
+  const dir=resolve('../resultados/ux-mapas');
+  await mkdir(dir,{recursive:true});
+  await page.goto('/');
+  const map=page.locator('.map-canvas');
+  await expect(map).toBeVisible();
+  const normal=await map.boundingBox();
+  await page.screenshot({path:resolve(dir,info.project.name+'-normal.png')});
+  await map.click({position:{x:normal!.width*.47,y:normal!.height*.46}});
+  await map.click({position:{x:normal!.width*.54,y:normal!.height*.54}});
+  await expect(map.locator('.point-marker')).toHaveCount(2);
+  await page.getByRole('button',{name:'Ampliar mapa'}).click();
+  const dialog=page.getByRole('dialog',{name:'Mapa y capas'});
+  await dialog.getByRole('button',{name:'Capas', exact:true}).click();
+  await dialog.getByRole('button',{name:'Ver zona disponible'}).click();
+  await expect(map.locator('.coverage-boundary')).toBeVisible();
+  await dialog.getByRole('button',{name:'Capas', exact:true}).click();
+  await dialog.getByRole('button',{name:'Ocultar límite'}).click();
+  const box=await map.boundingBox();
+  expect(box!.height).toBeGreaterThan(page.viewportSize()!.height*.85);
+  await dialog.getByRole('button',{name:'A · Origen',exact:true}).click();
+  await map.click({position:{x:box!.width*.46,y:box!.height*.49}});
+  await dialog.getByRole('button',{name:'B · Destino',exact:true}).click();
+  await map.click({position:{x:box!.width*.55,y:box!.height*.54}});
+  await expect(map.locator('.point-marker')).toHaveCount(2);
+  const separation=()=>map.locator('.point-marker').evaluateAll(nodes=>{
+    const [a,b]=nodes.map(n=>n.getBoundingClientRect());
+    return Math.hypot(a.x-b.x,a.y-b.y);
+  });
+  const beforeZoom=await separation();
+  await page.getByTitle('Acercar mapa').click();
+  await expect.poll(separation).toBeGreaterThan(beforeZoom*1.9);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect.poll(separation).toBeGreaterThan(beforeZoom*1.9);
+  await expandPanel(page);
+  await page.getByRole('button',{name:'Probar recorrido de ejemplo'}).click();
+  await page.getByRole('button',{name:'Comparar recorridos',exact:true}).click();
+  await expect(page.locator('.route-card')).toHaveCount(4,{timeout:30000});
+  await page.locator('[data-modalidad="robos"]').click();
+  const repeated: string[] = [];
+  page.on('request', request => {
+    if (request.method() === 'POST') repeated.push(request.url());
+  });
+  await page.getByRole('button',{name:'Ampliar mapa'}).click();
+  await expect(map.locator('.route-robos')).toHaveAttribute('stroke-width','7');
+  await expect(map.locator('.historical-pin')).toBeVisible();
+  await expect.poll(() => map.locator('.leaflet-tile-loaded').evaluateAll(tiles =>
+    tiles.every(tile => Number(getComputedStyle(tile).opacity) === 1))).toBe(true);
+  await page.screenshot({path:resolve(dir,info.project.name+'-ampliado.png')});
+  await dialog.getByRole('button',{name:'Volver'}).click();
+  await expect(page.locator('[data-modalidad="robos"]')).toHaveAttribute('aria-pressed','true');
+  expect(repeated).toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

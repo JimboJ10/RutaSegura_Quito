@@ -36,7 +36,7 @@ for (const version of [1, 2]) {
     await page.reload();
     await page.locator('.saved-library li button').first().click();
     const map = page.locator('.saved-map');
-    const aviso = page.getByText('Mapa de calles no disponible sin conexión. Tu recorrido sigue guardado',{exact:false});
+    const aviso = page.getByText('Calles de referencia de la zona piloto',{exact:false});
     await expect(aviso).toBeVisible();
     await expect(map.locator('.leaflet-overlay-pane path')).toHaveAttribute('d',/L/);
     fail = false;
@@ -67,6 +67,12 @@ for (const version of [1, 2]) {
     await options.first().click();
     await expect(map.locator('.leaflet-overlay-pane path')).toHaveAttribute('d',/L/);
     expect(requests).toBe(before);
+    await page.getByText('Más información',{exact:true}).click();
+    const lastNote = page.locator('.saved-more p').last();
+    await lastNote.scrollIntoViewIfNeeded();
+    const noteBox = await lastNote.boundingBox();
+    const footerBox = await page.locator('.theft-note').boundingBox();
+    expect(noteBox!.y + noteBox!.height).toBeLessThanOrEqual(footerBox!.y + 1);
     await context.setOffline(false);
     await expect(map.locator('.leaflet-tile-loaded').first()).toBeVisible();
     await expect(aviso).toHaveCount(0);

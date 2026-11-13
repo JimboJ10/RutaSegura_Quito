@@ -41,7 +41,7 @@ test('piloto real, cuarta modalidad seleccionable y copia local', async ({page})
   await page.locator('.saved-library li button').first().click();
   await page.getByRole('button',{name:label}).click();
   await expect(comparison).toBeVisible();
-  await expect(page.locator('.saved-map path')).toHaveAttribute('d',/L/);
+  await expect(page.locator('.saved-map .leaflet-overlay-pane path')).toHaveAttribute('d',/L/);
 });
 
 const excesiva = {...routes.features[0], properties:{...routes.features[0].properties, id:'robos',

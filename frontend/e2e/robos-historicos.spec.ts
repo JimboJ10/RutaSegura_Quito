@@ -81,6 +81,8 @@ test('leyendas simultáneas dejan libres el mapa y sus controles', async ({page}
   }
   const legend = await page.locator('.theft-legend').boundingBox();
   const center = await page.locator('.map-center').boundingBox();
-  expect(legend!.y).toBeGreaterThanOrEqual(center!.y + center!.height);
+  // En móvil los controles y la leyenda pueden ocupar columnas distintas.
+  expect(legend!.x + legend!.width <= center!.x || center!.x + center!.width <= legend!.x ||
+    legend!.y >= center!.y + center!.height || center!.y >= legend!.y + legend!.height).toBe(true);
   await page.screenshot({path:testInfo.outputPath('capas-locales.png')});
 });

@@ -10,6 +10,7 @@ test('zona publicada y aviso del piloto',async ({page,isMobile}, info) => {
   await mkdir(dir,{recursive:true});
   await page.goto('/');
   await expect(page.getByText('Zona piloto: centro-norte de Quito',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Información de cobertura'}).click();
   await expect(page.getByText(/Actualmente puedes consultar/)).toBeVisible();
   await expect(page.locator('.panel-toggle')).toBeVisible();
   await page.screenshot({path:resolve(dir,info.project.name+'-inicio.png')});
@@ -18,6 +19,7 @@ test('zona publicada y aviso del piloto',async ({page,isMobile}, info) => {
   await expect(page.getByText(/una conexión peatonal entre ellos/)).toBeVisible();
   await page.screenshot({path:resolve(dir,info.project.name+'-zona.png')});
   await page.getByRole('button',{name:'Ocultar límite'}).click();
+  await page.getByRole('button',{name:'Información de cobertura'}).click();
   await expect(page.locator('.coverage-boundary')).toHaveCount(0);
   await expandPanel(page);
   await page.getByRole('button',{name:'Probar recorrido de ejemplo'}).click();
@@ -30,8 +32,8 @@ test('zona publicada y aviso del piloto',async ({page,isMobile}, info) => {
   await page.screenshot({path:resolve(dir,info.project.name+'-aviso.png')});
   if(isMobile) {
     expect((await page.locator('.historical-notice').boundingBox())!.height).toBeLessThan(85);
-    await page.getByRole('button',{name:'Ver detalles'}).click();
   }
+  await page.getByRole('button',{name:'Ver detalles'}).click();
   await expect(page.getByText('No representa peligro actual ni identifica el lugar exacto de un delito')).toBeVisible();
 });
 

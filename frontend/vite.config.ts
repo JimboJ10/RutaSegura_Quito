@@ -18,7 +18,7 @@ export default defineConfig({
   plugins: [react(), {
     name: 'ruta-shell', apply: 'build', enforce: 'post',
     generateBundle(_, bundle) {
-      const publicFiles = ['manifest.webmanifest', 'favicon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable.png'];
+      const publicFiles = ['manifest.webmanifest', 'favicon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable.png', 'calles-piloto.geojson'];
       const files = ['index.html', ...Object.keys(bundle).filter(name => /^assets\/[^/]+\.(js|css)$/.test(name)), ...publicFiles];
       const template = readFileSync(new URL('./scripts/service-worker.template.js', import.meta.url), 'utf8');
       const hash = createHash('sha256').update(template);

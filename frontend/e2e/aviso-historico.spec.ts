@@ -37,7 +37,7 @@ for (const scenario of ['uno','varios','ninguno','ausente']) {
   test('intersecciones: '+scenario, async ({page}) => {
     await page.route('**/robos-historicos/alternativa',r=>r.fulfill({json:{estado:'sin_alternativa'}}));
     const lines = [[[-78.5,-.196],[-78.498,-.194]]];
-    if (scenario==='varios') lines.push([[-78.499,-.194],[-78.498,-.193]]);
+    if (scenario==='varios') lines.push([[-78.5,-.195],[-78.498,-.193]]);
     await page.route('**/robos-historicos/cruces?*',r=>r.fulfill(scenario==='ausente' ? {status:503,json:{detail:'Sin datos'}} :
       {json:Object.fromEntries(['corta','historica','lightgbm'].map(id=>[id,{zonas:scenario==='ninguno'?[]:['zona'],tramos:scenario==='ninguno'?[]:lines}]))}));
     await page.goto('/');
@@ -49,5 +49,13 @@ for (const scenario of ['uno','varios','ninguno','ausente']) {
     await expect(page.locator('.theft-summary')).toContainText(eligible?'Atraviesa':scenario==='ausente'?'no disponible':'no atraviesa');
     await expect(page.locator('.historical-pin')).toHaveCount(eligible?1:0);
     await expect(page.locator('.historical-notice')).toHaveCount(eligible?1:0);
+    if (scenario === 'varios') {
+      await expect(page.locator('.historical-pin')).toHaveAccessibleName(/2 grupos en esta vista/);
+      await page.getByRole('button',{name:'Acercar a los tramos'}).click();
+      await expect(page.locator('.historical-pin')).toHaveCount(2);
+      await page.getByRole('button',{name:'Centrar zona'}).click();
+      await expect(page.locator('.historical-pin')).toHaveCount(1);
+      await expect(page.locator('.historical-pin')).toHaveAccessibleName(/2 grupos en esta vista/);
+    }
   });
 }
