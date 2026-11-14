@@ -2,8 +2,12 @@
 const cacheName = 'rutainformada-shell-' + __REVISION__;
 const files = __SHELL_FILES__;
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(cacheName).then(cache =>
-    cache.addAll(files.map(path => new Request(path, {cache: 'reload'})))));
+  event.waitUntil((async () => {
+    const cache = await caches.open(cacheName);
+    await cache.addAll(files.map(path => new Request(path, {cache: 'reload'})));
+    // La siguiente navegación debe usar la revisión completa aunque otra ventana siga abierta.
+    await self.skipWaiting();
+  })());
 });
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {

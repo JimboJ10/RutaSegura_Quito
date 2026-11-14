@@ -124,7 +124,9 @@ try {
   assert.equal(await page.evaluate(async()=>!!await caches.match('/calles-piloto.geojson')),false);
   await writeFile(swPath,worker);
   await page.evaluate(async()=>{await (await navigator.serviceWorker.ready).update()});
-  await expect.poll(()=>page.evaluate(async()=>!!(await navigator.serviceWorker.ready).waiting)).toBe(true);
+  // Con el cliente anterior abierto, la actualización debe tomar el control.
+  await expect.poll(()=>page.evaluate(async()=>!(await caches.keys()).includes('rutainformada-shell-anterior') &&
+    !!await caches.match('/calles-piloto.geojson'))).toBe(true);
   const nextTab = await context.newPage();
   for (const tab of context.pages()) if (tab !== nextTab) await tab.close();
   // Reabrir tras cerrar todos los clientes, como en una actualización normal de la PWA.

@@ -52,8 +52,9 @@ test('identidad pública: nombre, presentación científica y cabecera responsiv
 
   await page.getByRole('button', { name: 'Sobre los datos' }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading')).toBeFocused();
-  await expect(dialog.getByRole('heading')).toBeInViewport({ ratio: 1 });
+  const dialogTitle = dialog.getByRole('heading', {name:'Cómo leer este mapa', level:2});
+  await expect(dialogTitle).toBeFocused();
+  await expect(dialogTitle).toBeInViewport({ ratio: 1 });
   await expect(dialog.locator('.main-warning')).toBeInViewport({ ratio: 1 });
   await expect(dialog).toContainText('RutaInformada Quito');
   await expect(dialog).toContainText(description);

@@ -31,6 +31,18 @@ test('piloto real, cuarta modalidad seleccionable y copia local', async ({page})
   await card.click();
   await expect(card).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.route-robos')).toHaveAttribute('stroke-width','7');
+  // Una interfaz antigua podía mostrar las cuatro rutas y el contorno sin montar el marcador.
+  const pin = page.locator('.historical-pin').first();
+  const map = page.locator('.map-canvas');
+  await expect(page.locator('.leaflet-historical-segments-pane path').first()).toHaveAttribute('d', /L/);
+  await expect(pin).toBeVisible();
+  const bounds = await map.boundingBox();
+  const close = page.getByRole('button', {name:'Cerrar información histórica'});
+  if (await close.isVisible()) await close.click();
+  await pin.click();
+  await expect(page.locator('.historical-notice')).toContainText('2019–2022');
+  expect(await map.boundingBox()).toEqual(bounds);
+  await close.click();
   const comparison = page.getByRole('heading', {name:/Comparación con la más corta/});
   await expect(comparison).toBeVisible();
   await expect(page.getByText(/ni predice delitos futuros/)).toBeVisible();

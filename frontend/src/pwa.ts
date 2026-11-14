@@ -3,7 +3,7 @@ export async function prepareShell(): Promise<string> {
   if (!window.isSecureContext || !('serviceWorker' in navigator))
     return 'La apertura sin conexión requiere un navegador compatible y una conexión segura.';
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js');
+    const registration = await navigator.serviceWorker.register('/sw.js', {updateViaCache: 'none'});
     if (!registration.active && registration.installing) {
       const worker = registration.installing;
       await new Promise<void>((resolve, reject) => {
