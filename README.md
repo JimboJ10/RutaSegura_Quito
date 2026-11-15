@@ -1,10 +1,16 @@
 # RutaInformada Quito
 
-Demo de STEMergent Hacks 2026 para comparar recorridos peatonales en una zona piloto de 19,13 km² del centro-norte de Quito. El recorrido de ejemplo permite comparar distancia, concentración histórica de siniestros, estimación vial LightGBM y concentración histórica de robos a personas. Para reproducir las cuatro modalidades desde GitHub, usa esta revisión de `main` y genera la capa opcional en tu equipo. El tag `hackathon-final-2026-11-14` conserva el arranque anterior.
+**English** · [Español](README.es.md)
 
-## Preparar Windows
+RutaInformada Quito is a STEMergent Hacks 2026 demo for comparing walking routes within a 19.13 km² pilot area in north-central Quito, Ecuador. The example trip offers four ways to compare the journey: shortest distance, historical traffic crash concentration, a LightGBM estimate of traffic crashes, and historical concentration of reported robberies against people (experimental). To reproduce all four from GitHub, use this revision of `main` and generate the optional historical layer locally. The tag `hackathon-final-2026-11-14` preserves the previous startup procedure.
 
-En una carpeta nueva, con Git, PowerShell, Python 3.14 x64 y Node.js 22.12 o posterior:
+## Architecture and data
+
+The React and TypeScript frontend is built with Vite. Leaflet draws routes returned by FastAPI. The Python backend uses OSMnx and NetworkX with a pedestrian-access-filtered street graph derived from © OpenStreetMap contributors. LightGBM supplies precomputed, retrospective traffic crash estimates for June 2026. The API serves the three base routes through `POST /rutas` and evaluates the optional robbery comparison separately through `POST /robos-historicos/alternativa`. These indicators describe historical concentrations. They cannot establish an individual's likelihood of a crash or guarantee a safe journey.
+
+## Set up on Windows
+
+Start in a new directory with Git, PowerShell, 64-bit Python 3.14 and Node.js 22.12 or later installed.
 
 ```powershell
 git clone https://github.com/JimboJ10/RutaSegura_Quito.git
@@ -16,46 +22,48 @@ npm.cmd --prefix frontend ci
 .\backend\.venv\Scripts\python.exe scripts\distribuir_mvp.py verificar
 ```
 
-Si ya dispones del entorno y los datos validados, utiliza directamente el arranque. El ZIP incluye el grafo peatonal filtrado y las 25 cuadrículas de predicciones de junio de 2026. El manifiesto verifica tamaños y SHA-256. Las estimaciones e indicadores utilizados por la API ya están calculados. Ejecutar la demo no requiere entrenar ni cargar otro modelo.
+If your environment and data have already been validated, skip to startup. The ZIP contains the filtered pedestrian graph and the 25 prediction grid cells for June 2026. The verifier checks file sizes and SHA-256 hashes against the manifest. The API uses precomputed estimates and indicators, so running the demo requires no model training or additional model loading.
 
-## Generar la capa histórica en el equipo del juez
+<a id="generar-la-capa-histórica-en-el-equipo-del-juez"></a>
 
-Tras extraer el ZIP e instalar las dependencias, revisa las condiciones de la fuente que se detallan abajo. Para una evaluación local compatible con esas condiciones, ejecuta desde la raíz:
+## Generate the historical layer on your computer
+
+After extracting the ZIP and installing dependencies, review the source terms below. For a local evaluation consistent with those terms, run these commands from the repository root.
 
 ```powershell
 .\backend\.venv\Scripts\python.exe scripts\generar_capa_robos_historicos_quito.py
 .\backend\.venv\Scripts\python.exe scripts\generar_capa_robos_historicos_quito.py --verificar
 ```
 
-El primer comando requiere internet y consulta los metadatos, un conteo de control y 25 conteos por polígono en ArcGIS. Usa la fecha del hecho desde el 1 de enero de 2019 hasta antes del 1 de enero de 2023 y recorta las cuadrículas del ZIP al rectángulo piloto. Exige que la suma coincida con el control y oculta los conteos de 1 a 4 por celda. Escribe el GeoJSON y un informe de auditoría en `resultados/delincuencia_exploratoria/`, fuera de Git. Ninguna consulta solicita incidentes individuales.
+The first command requires internet access. It requests ArcGIS metadata, a control count for the pilot rectangle and one count for each of the 25 polygons. It clips the bundled grid to the pilot rectangle and counts events dated January 1, 2019 through December 31, 2022 inclusive. The sum must match the control count. Counts of one to four per cell are suppressed. The generator writes a GeoJSON file and an audit report to `resultados/delincuencia_exploratoria/`, outside Git. It never requests individual incidents.
 
-El segundo comando verifica sin internet `robos_historicos_2019_2022_cuadriculas.geojson`. Si ya tienes la capa, basta con este paso. El SHA-256 del archivo de referencia en Windows es `fab7a8a2de13f0718863caf28581e9a81e988f1834f7296129779b04df15e6a1`. El arranque ahora verifica el contenido JSON normalizado. Acepta diferencias de sangrado, finales de línea, BOM UTF-8 y orden de las claves o de las 25 celdas. Comprueba el periodo, la fuente y la identidad de cada celda, y la huella abarca también coordenadas, conteos, densidades, clasificación y metadatos. Si la fuente cambia o falla, la generación se detiene antes de sustituir la capa. Si no puedes acceder al servicio ni dispones de una copia legítima, usa el arranque de tres modalidades descrito más abajo.
+The second command verifies `robos_historicos_2019_2022_cuadriculas.geojson` offline. If you already have the layer, this step is sufficient. The Windows reference file has SHA-256 `fab7a8a2de13f0718863caf28581e9a81e988f1834f7296129779b04df15e6a1`. Startup checks normalized JSON content, allowing differences in indentation, line endings, UTF-8 BOM, key order and cell order. It checks the period, source and cell identities. The fingerprint also covers coordinates, counts, densities, classifications and metadata. If the source changes or a query fails, generation stops before replacing the layer. If the service is unavailable and you lack a legitimate local copy, use the three-mode startup below.
 
-### Procedencia y reutilización · revisión del 15 de noviembre de 2026
+### Provenance and reuse · reviewed November 15, 2026
 
-La ficha pública **Robo_personas view** identifica como publicador a la cuenta `jquinteros_esriecdemos`. Los campos de créditos y condiciones de uso de la ficha y el copyright de la capa están vacíos. El servicio declara su última edición de datos en junio de 2023. La consulta espacial selecciona el rectángulo de Quito. La ficha incluye la etiqueta «cuenca» y no identifica al productor primario, la institución titular ni la precisión de los puntos. [Ficha original](https://www.arcgis.com/home/item.html?id=f406a38db5f7465b9be1eadec882f769) · [Metadatos de la ficha](https://www.arcgis.com/sharing/rest/content/items/f406a38db5f7465b9be1eadec882f769?f=pjson) · [Servicio y metadatos de la capa](https://services1.arcgis.com/UOl0yzPDLol8nS3m/ArcGIS/rest/services/Robo_personas_view/FeatureServer/0)
+The public **Robo_personas view** item lists `jquinteros_esriecdemos` as its publisher. The item credits, item-specific terms and layer copyright fields are blank. The service reports its last data edit in June 2023. The spatial query selects the Quito rectangle. The item also carries the tag “cuenca” and identifies neither the original producer nor the rights holder. It gives no positional accuracy for the points. [Original item](https://www.arcgis.com/home/item.html?id=f406a38db5f7465b9be1eadec882f769) · [Item metadata](https://www.arcgis.com/sharing/rest/content/items/f406a38db5f7465b9be1eadec882f769?f=pjson) · [Layer service and metadata](https://services1.arcgis.com/UOl0yzPDLol8nS3m/ArcGIS/rest/services/Robo_personas_view/FeatureServer/0)
 
-Esri describe permisos de uso, reproducción, creación de derivados y distribución del contenido compartido públicamente, sujetos a las restricciones del proveedor. Las condiciones del servicio también remiten a los términos y metadatos del titular. La ficha permite la consulta pública. Sigue sin acreditarse que el publicador tenga derechos suficientes sobre la base original para autorizar la redistribución de este derivado en GitHub. La agregación reduce la exposición de datos individuales y deja abierta la cuestión de titularidad. Por ese motivo el repositorio distribuye el procedimiento, sin adjuntar sus resultados. [Reglas de ArcGIS Online](https://doc.arcgis.com/en/arcgis-online/reference/terms-of-use.htm) · [Condiciones del servicio Esri](https://www.esri.com/en-us/legal/terms/web-site-service)
+Esri describes permission to use, reproduce, create derivatives of and distribute publicly shared content, subject to provider restrictions. Its service terms also refer users to the owner's terms and metadata. The item supports public queries. We have been unable to verify that its publisher holds sufficient rights to authorize redistribution of this derivative on GitHub. Aggregation reduces disclosure of individual data but does not resolve ownership. The repository therefore includes the generation procedure and excludes its outputs. [ArcGIS Online terms](https://doc.arcgis.com/en/arcgis-online/reference/terms-of-use.htm) · [Esri service terms](https://www.esri.com/en-us/legal/terms/web-site-service)
 
-El Código Municipal contempla la apertura de información pública municipal en formatos reutilizables. Para invocar esas disposiciones aquí falta vincular esta ficha con una publicación municipal oficial y su cadena de derechos. Una confirmación del titular que cubra los agregados y su republicación permitiría revisar la distribución. [Código Municipal de Quito, disposiciones sobre transparencia y oficialidad](https://www.quito-turismo.gob.ec/descargas/LOTAIP_2024/marzo/CODIGO_MUNICIPAL.pdf)
+Quito's Municipal Code provides for access to municipal public information in reusable formats. Applying those provisions here would require evidence linking this item to an official municipal publication and establishing the chain of rights. Confirmation from the rights holder covering the aggregates and their republication would allow us to revisit distribution. [Quito Municipal Code](https://www.quito-turismo.gob.ec/descargas/LOTAIP_2024/marzo/CODIGO_MUNICIPAL.pdf)
 
-## Iniciar la demo
+## Start the demo
 
-Abre **dos terminales en la raíz del repositorio**. Primero inicia FastAPI:
+Open **two terminals at the repository root**. In the first, start FastAPI.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\iniciar-demo.ps1 backend
 ```
 
-Cuando Uvicorn indique que está listo, inicia el frontend en la otra terminal:
+Once Uvicorn reports that it is ready, start the frontend in the second terminal.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\iniciar-demo.ps1 frontend
 ```
 
-Abre **http://127.0.0.1:4173**. El primer comando comprueba los archivos de la demo completa e inicia `main:app` con cobertura `demo` y red `peatonal_filtrada`. El segundo recompila antes de servir Preview y fija `VITE_API_BASE_URL=/api`. Comprueba la conexión en http://127.0.0.1:4173/api/health. El puerto de la API es 8000. Para detener cada proceso, pulsa Ctrl+C en su terminal. Utiliza siempre el mismo origen para volver a encontrar los recorridos guardados.
+Open **http://127.0.0.1:4173**. The backend command verifies the full demo resources and starts `main:app` with coverage `demo` and network `peatonal_filtrada`. The frontend command rebuilds the app before serving Vite Preview and sets `VITE_API_BASE_URL=/api`. Check connectivity at http://127.0.0.1:4173/api/health. The API listens on port 8000. Press Ctrl+C in each terminal to stop its process. Use the same browser and origin each time to access saved trips.
 
-**Con el ZIP público solamente**, inicia el backend de esta manera y usa el mismo comando del frontend:
+**With only the public ZIP**, start the backend as follows and use the same frontend command above.
 
 ```powershell
 $env:RUTAINFORMADA_COBERTURA = 'demo'
@@ -65,23 +73,25 @@ Push-Location backend
 Pop-Location
 ```
 
-## Comprobar el recorrido y la PWA
+## Try the example and test offline access
 
-1. Pulsa **Probar recorrido de ejemplo** y **Comparar recorridos**. Con la capa validada se obtienen cuatro trazados para A (−0,201; −78,504) y B (−0,184; −78,486), en latitud y longitud. Para otros puntos la cuarta tarjeta requiere un recorrido distinto de los tres existentes, con al menos 10 m y 2 % de reducción en zonas de mayor concentración y 2 % de reducción del indicador ponderado frente a la más corta, sin aumentar el recorrido en sectores sin datos o con densidad oculta. Los límites son 300 m de ajuste y 15 % de desvío entre nodos. Las distancias excluyen el acceso desde los puntos solicitados.
-2. Con los datos completos, selecciona una modalidad y activa **Resaltar tramos en el mapa**. Toca el triángulo y **Ver detalles**. La marca se refiere a registros agregados de 2019–2022. No señala un delito individual ni permite inferir peligro actual.
-3. Pulsa **Guardar recorrido** y abre **Guardados**. Una vez preparada la aplicación para uso sin conexión, puedes cerrar y volver a abrirla en ese navegador, consultar cada modalidad guardada y utilizar las calles vectoriales de referencia. El cálculo de nuevos recorridos requiere FastAPI. Las teselas públicas de OpenStreetMap se consultan en línea.
-4. Tras cambiar de versión, abre el mismo origen con conexión y recarga tras la activación de la actualización. Una ventana ya abierta conserva su interfaz hasta la siguiente navegación. Borrar los datos del sitio también borra los recorridos guardados.
+The interface is in Spanish. The labels below match the controls on screen.
 
-Consulta el [backend](backend/README.md), el [contrato de integración](backend/FRONTEND_API.md) y la [guía del frontend](frontend/README.md) para las pruebas y los detalles técnicos.
+1. Click **Probar recorrido de ejemplo** (load the example trip), then **Comparar recorridos** (compare routes). With the validated layer, you will see four distinct routes from A (−0.201, −78.504) to B (−0.184, −78.486), in latitude–longitude order. For other endpoints, the fourth card appears only for a distinct alternative that reduces distance inside higher-concentration zones by at least **10 m and 2%**, and the density-weighted indicator by at least **2%**, relative to the shortest route. It must also avoid increasing exposure in areas with missing or suppressed density data. Endpoints must snap to the network within 300 m. Routes may be at most 15% longer than the shortest path between snapped nodes. Reported distances exclude the walk from the requested points to those nodes.
+2. Select a route and enable **Resaltar tramos en el mapa** (highlight segments on the map). Tap a yellow triangle on a highlighted segment, then **Ver detalles** (view details). The marker refers to aggregated 2019–2022 records. It identifies neither an individual crime location nor a present danger.
+3. Click **Guardar recorrido** (save trip), then **Guardados** (saved trips). Once the progressive web app is ready for offline use, you can close and reopen it in the same browser, switch between saved routes and view local vector reference streets. New calculations require FastAPI. Public OpenStreetMap tiles are fetched online. The service worker caches the app shell and reference streets, and IndexedDB stores the trips you choose to save.
+4. After a version change, open the same origin online and reload once the update activates. An open window keeps its current interface until the next navigation. Clearing site data also deletes saved trips.
 
-Para repetir las comprobaciones HTTP desde otra terminal en la raíz, con FastAPI iniciado:
+See the [backend guide](backend/README.md), [integration contract](backend/FRONTEND_API.md) and [frontend guide](frontend/README.md) for tests and technical details (in Spanish).
+
+To repeat the HTTP integration checks, keep FastAPI running and open another terminal at the repository root.
 
 ```powershell
 $env:VITE_API_BASE_URL = 'http://127.0.0.1:8000'
 npm.cmd --prefix frontend run test:integration
 ```
 
-Para verificar también las tarjetas, el triángulo interactivo y el guardado, deja Preview abierto e inicia estas pruebas desde esa misma terminal:
+To check the route cards, interactive triangle and saved trip, keep Preview running and use the same terminal.
 
 ```powershell
 npm.cmd --prefix frontend run browser:install
