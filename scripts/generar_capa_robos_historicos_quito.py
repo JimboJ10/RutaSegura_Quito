@@ -15,20 +15,22 @@ Requisitos: shapely y pyproj (presentes normalmente en el entorno geoespacial).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 try:
     from pyproj import Transformer
+    from shapely import transform
     from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box, mapping, shape
-    from shapely.ops import transform as shapely_transform
     from shapely.geometry.polygon import orient
 except ImportError as e:
     raise SystemExit('Falta una dependencia: shapely y pyproj. Usa el .venv del backend. ' + str(e))
@@ -45,6 +47,52 @@ FECHAS_SQL = "FECHA_DEL_ >= DATE '2019-01-01' AND FECHA_DEL_ < DATE '2023-01-01'
 PROYECCION = Transformer.from_crs('EPSG:4326', 'EPSG:32717', always_xy=True).transform
 UMBRAL_PRIVACIDAD = 5
 VERSION = '1.0.0'
+# SHA-256 del contenido JSON normalizado de la demo validada (no de sus bytes).
+HUELLA_CONTENIDO = '7211aef82e6ee06c6caa9bb918709e51f93e7631315e28566799d612e054cd56'
+
+
+def validar_demo(doc):
+    if not isinstance(doc, dict) or doc.get('type') != 'FeatureCollection':
+        raise ValueError('Se esperaba una colección GeoJSON')
+    meta = doc.get('metadata')
+    if not isinstance(meta, dict) or (meta.get('fuente'), meta.get('periodo')) != (URL, '2019-2022'):
+        raise ValueError('Fuente o periodo distintos de la demo')
+    filas = doc.get('features')
+    if not isinstance(filas, list) or len(filas) != 25:
+        raise ValueError('Se esperaban 25 cuadrículas')
+    por_id = {}
+    for f in filas:
+        if not isinstance(f, dict) or not isinstance(f.get('properties'), dict):
+            raise ValueError('Falta la ficha de una cuadrícula')
+        celda = f['properties'].get('celda_id')
+        if not isinstance(celda, str) or celda != f.get('id') or celda in por_id:
+            raise ValueError('Identificador de cuadrícula inválido o duplicado')
+        por_id[celda] = f
+    # Incluye todas las coordenadas, conteos, rangos ocultos, densidades,
+    # categorías y metadatos. Cambiar cualquiera exige auditar otra versión.
+    normalizado = {**doc, 'features': [por_id[k] for k in sorted(por_id)]}
+    contenido = json.dumps(normalizado, sort_keys=True, ensure_ascii=False,
+                           allow_nan=False, separators=(',', ':')).encode('utf-8')
+    if hashlib.sha256(contenido).hexdigest() != HUELLA_CONTENIDO:
+        raise ValueError('El contenido difiere de la demo histórica validada. Revise la cuadrícula base y la fuente.')
+
+
+def claves_unicas(pares):
+    obj = dict(pares)
+    if len(obj) != len(pares):
+        raise ValueError('El documento JSON contiene claves repetidas')
+    return obj
+
+
+def guardar_json(destino, doc):
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    with NamedTemporaryFile(dir=destino.parent, delete=False) as archivo:
+        temporal = Path(archivo.name)
+    try:
+        temporal.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding='utf-8')
+        temporal.replace(destino)
+    finally:
+        temporal.unlink(missing_ok=True)
 
 
 def consultar(ruta: str, params: dict, *, post: bool = False) -> dict:
@@ -85,11 +133,9 @@ def consultar_conteo(geometria: dict, *, tipo: str) -> int:
         'inSR': '4326',
         'spatialRel': 'esriSpatialRelIntersects',
     }, post=True)
-    if 'count' not in data:
-        raise RuntimeError('ArcGIS no devolvió count para una consulta')
-    n = int(data['count'])
-    if n < 0:
-        raise ValueError('Conteo negativo del servidor')
+    n = data.get('count')
+    if type(n) is not int or n < 0:
+        raise ValueError('ArcGIS no devolvió un conteo entero no negativo')
     return n
 
 
@@ -134,7 +180,7 @@ def extraer_features(path: Path):
 
 
 def area_km2(g):
-    return shapely_transform(PROYECCION, g).area / 1_000_000
+    return transform(g, PROYECCION, interleaved=False).area / 1_000_000
 
 
 def main() -> int:
@@ -142,7 +188,14 @@ def main() -> int:
     parser.add_argument('--origen', type=Path, default=ORIGEN)
     parser.add_argument('--salida', type=Path, default=SALIDA)
     parser.add_argument('--informe', type=Path, default=INFORME)
+    parser.add_argument('--verificar', action='store_true', help='Validar la capa local sin llamar a ArcGIS')
     args = parser.parse_args()
+    if args.verificar:
+        validar_demo(json.loads(args.salida.read_text(encoding='utf-8-sig'), object_pairs_hook=claves_unicas))
+        print('Capa histórica validada: 25 cuadrículas, periodo 2019-2022.')
+        return 0
+    if len({p.resolve() for p in (args.origen, args.salida, args.informe)}) != 3:
+        raise ValueError('Use archivos distintos para origen, salida e informe')
     print('PROYECTO: RutaInformada Quito — datos históricos de robos 2019-2022')
     print('FUENTE:', URL)
     print('Uso: exploratorio LOCAL, licencia para redistribución pendiente de verificar.')
@@ -183,7 +236,7 @@ def main() -> int:
             continue
         n = consultar_conteo(armar_geometria_esri(clipped), tipo='polygon')
         conteo_sumado += n
-        print(f'  Cuadrícula {indice:02d}/25: {n} registros | {a:.3f} km²')
+        print(f'  Cuadrícula {indice:02d}/25 consultada')
         salidas.append({'id': idc, 'g': clipped, 'n': n, 'a': a, 'densidad': n/a})
         time.sleep(0.15)
 
@@ -192,12 +245,8 @@ def main() -> int:
     # Una cuadrícula puede compartir frontera con otra: las intersecciones en frontera
     # ocasionalmente cuentan dos veces un punto. También podemos detectar huecos.
     diferencia = conteo_sumado-control
-    if abs(diferencia) > max(5, math.ceil(control*0.01)):
-        print('ADVERTENCIA: suma de celdas distinta del conteo BBOX por más del 1%.')
-        print('    BBOX =', control, '; suma celdas =', conteo_sumado)
-        print('    Posibles solapamientos, huecos, o geometrías inesperadas.')
-        print('No se escribió el GeoJSON. Revisar geometrías antes de seguir.')
-        return 2
+    if diferencia:
+        raise ValueError('La suma de las celdas difiere del conteo de control. Revise huecos y bordes compartidos.')
 
     # Densidad anualizada NO es riesgo: solo registros por km² durante cuatro años.
     densidades = [v['densidad'] for v in salidas if v['n'] >= UMBRAL_PRIVACIDAD and v['a'] >= 0.2]
@@ -255,10 +304,9 @@ def main() -> int:
         'n_celdas_mayor_concentracion': sum(f['properties']['nivel'] == 'mayor_concentracion_historica_relativa' for f in salida_features),
         'nota': 'La suma puede diferir por puntos en límites compartidos. El mapa no refleja delincuencia actual.',
     }
-    args.salida.parent.mkdir(parents=True, exist_ok=True)
-    args.informe.parent.mkdir(parents=True, exist_ok=True)
-    args.salida.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding='utf-8')
-    args.informe.write_text(json.dumps(informe, ensure_ascii=False, indent=2), encoding='utf-8')
+    validar_demo(doc)
+    guardar_json(args.informe, informe)
+    guardar_json(args.salida, doc)
     print('\nGeoJSON creado:', args.salida)
     print('Auditoría creada:', args.informe)
     print('Cuadrículas:', len(salidas), ' | BBOX:', control, ' | suma celdas:', conteo_sumado)
@@ -269,6 +317,6 @@ def main() -> int:
 if __name__ == '__main__':
     try:
         raise SystemExit(main())
-    except (FileNotFoundError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, RuntimeError) as exc:
         print('ERROR:', str(exc), file=sys.stderr)
         raise SystemExit(1)

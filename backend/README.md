@@ -4,7 +4,7 @@
 
 Aplicación web experimental que permite comparar rutas peatonales en una zona del centro-norte de Quito utilizando información histórica de siniestros de tránsito e inteligencia artificial.
 
-API experimental de comparación de rutas peatonales para STEMergent Hacks 2026. A partir de un origen y destino dentro de la zona demo de Quito, devuelve una ruta corta y dos alternativas basadas en indicadores históricos y LightGBM.
+Para STEMergent Hacks 2026, `POST /rutas` devuelve la ruta corta y las dos modalidades viales. La cuarta comparación se solicita por separado a `POST /robos-historicos/alternativa` y requiere la capa agregada local de 2019–2022. Para preparar los datos desde GitHub y probar el recorrido de ejemplo, sigue la [guía del juez](../README.md#generar-la-capa-histórica-en-el-equipo-del-juez).
 
 La demostración utiliza predicciones **retrospectivas de junio de 2026**. No ofrece predicciones actuales, probabilidades individuales de accidente ni una garantía de mayor seguridad.
 

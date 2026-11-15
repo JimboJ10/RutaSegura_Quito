@@ -1,0 +1,2 @@
+# El manifiesto de la auditoría peatonal verifica los bytes de este script.
+scripts/validar_cobertura_peatonal.py text eol=lf

@@ -6,7 +6,7 @@ Aplicación web experimental que permite comparar rutas peatonales en una zona d
 
 MVP de comparación de recorridos peatonales con React, TypeScript, Vite, Leaflet y React Leaflet. Interfaz en español, panel inferior expandible en celulares y panel lateral contraíble desde 768 px. La identidad pública también se refleja en `/health`, `/config` y Swagger; el contrato, los datos y el algoritmo se conservan.
 
-Para conectar el frontend a la demo peatonal filtrada sin modificar `.env.local`, consulta el [ensayo aislado de integración](../backend/INTEGRACION_DEMO_FILTRADA.md). Usa `main:app` en `127.0.0.1:8802` y el servidor de pruebas Vite en `127.0.0.1:5185`; el proxy `/api` mantiene las solicitudes locales. El panel presenta tres modalidades, que pueden compartir el mismo recorrido.
+Para la entrega del hackathon, sigue la [guía de generación local y arranque](../README.md). Preview usa el puerto 4173 y el ejemplo presenta cuatro tarjetas con la capa histórica validada. El [ensayo aislado de integración de la red peatonal](../backend/INTEGRACION_DEMO_FILTRADA.md) utiliza otros puertos (8802 y 5185) y documenta las tres modalidades base.
 
 **Demostración retrospectiva con datos de junio de 2026. Los indicadores no representan probabilidades individuales de accidente ni garantizan la seguridad de los recorridos.**
 

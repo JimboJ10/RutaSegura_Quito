@@ -16,10 +16,9 @@ try {
         & $python scripts/distribuir_mvp.py verificar
         if ($LASTEXITCODE) { throw 'Revise los datos del paquete base del MVP.' }
         $capa = 'resultados/delincuencia_exploratoria/robos_historicos_2019_2022_cuadriculas.geojson'
-        if (!(Test-Path -LiteralPath $capa -PathType Leaf)) { throw "Falta el recurso local de la demo completa: $capa. Consulte README.md." }
-        if ((Get-FileHash -LiteralPath $capa -Algorithm SHA256).Hash -ne 'fab7a8a2de13f0718863caf28581e9a81e988f1834f7296129779b04df15e6a1') {
-            throw "El GeoJSON historico difiere del validado para esta demo: $capa"
-        }
+        if (!(Test-Path -LiteralPath $capa -PathType Leaf)) { throw "Falta $capa. Consulte el paso de generacion local de ArcGIS en README.md." }
+        & $python scripts/generar_capa_robos_historicos_quito.py --verificar
+        if ($LASTEXITCODE) { throw 'La capa historica no coincide con los datos validados de la demo.' }
         Set-Location backend
         & $python -m uvicorn main:app --host 127.0.0.1 --port 8000
     } else {
