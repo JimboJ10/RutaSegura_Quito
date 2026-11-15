@@ -1,0 +1,16 @@
+.git
+**/.venv
+**/node_modules
+**/.playwright-browsers
+**/.env*
+**/test-results
+**/evidencias
+**/__pycache__
+**/*.pem
+**/*.key
+**/*.pfx
+datos_originales
+resultados
+red_vial
+frontend/dist
+LEEME.txt

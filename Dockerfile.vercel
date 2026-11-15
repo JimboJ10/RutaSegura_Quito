@@ -1,0 +1,16 @@
+FROM python:3.14-slim AS data
+WORKDIR /app
+COPY entregas/demo-peatonal-v1-2026-11-04.zip /tmp/demo.zip
+COPY backend/datos_mvp.py backend/datos_mvp.manifest.json backend/
+RUN PYTHONPATH=backend python -c "from zipfile import ZipFile; from datos_mvp import RUTAS, verificar_archivo; z=ZipFile('/tmp/demo.zip'); [z.extract(p) for p in RUTAS.values()]; [verificar_archivo(k) for k in RUTAS]"
+
+FROM python:3.14-slim
+WORKDIR /app/backend
+COPY backend/requirements.txt backend/requirements-lock.txt ./
+RUN grep '^[A-Za-z].*==' requirements-lock.txt > /tmp/constraints.txt && pip install --no-cache-dir --only-binary=:all: -c /tmp/constraints.txt -r requirements.txt
+COPY backend/*.py backend/datos_mvp.manifest.json ./
+COPY --from=data /app/red_vial /app/red_vial
+COPY --from=data /app/resultados /app/resultados
+ENV OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONUNBUFFERED=1
+EXPOSE 80
+CMD ["sh", "-c", "exec python -m uvicorn vercel_app:app --host 0.0.0.0 --port ${PORT:-80}"]

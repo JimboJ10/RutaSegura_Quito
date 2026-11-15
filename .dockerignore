@@ -1,0 +1,8 @@
+**
+!backend/
+!backend/*.py
+!backend/datos_mvp.manifest.json
+!backend/requirements*.txt
+!entregas/
+!entregas/demo-peatonal-v1-2026-11-04.zip
+!Dockerfile.vercel
