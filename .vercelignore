@@ -14,3 +14,5 @@ resultados
 red_vial
 frontend/dist
 LEEME.txt
+deploy-data/*
+!deploy-data/robos_historicos_2019_2022_cuadriculas.geojson

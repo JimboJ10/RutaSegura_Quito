@@ -1,5 +1,7 @@
 # RutaInformada Quito
 
+Deployment branch: the public service bundles the validated historical grid. The local generation instructions below describe the original submission. See [deployment and source terms](VERCEL.md).
+
 **English** · [Español](README.es.md)
 
 RutaInformada Quito is a STEMergent Hacks 2026 demo for comparing walking routes within a 19.13 km² pilot area in north-central Quito, Ecuador. The example trip offers four ways to compare the journey: shortest distance, historical traffic crash concentration, a LightGBM estimate of traffic crashes, and historical concentration of reported robberies against people (experimental). To reproduce all four from GitHub, use this revision of `main` and generate the optional historical layer locally. The tag `hackathon-final-2026-11-14` preserves the previous startup procedure.

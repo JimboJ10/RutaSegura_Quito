@@ -11,6 +11,8 @@ RUN grep '^[A-Za-z].*==' requirements-lock.txt > /tmp/constraints.txt && pip ins
 COPY backend/*.py backend/datos_mvp.manifest.json ./
 COPY --from=data /app/red_vial /app/red_vial
 COPY --from=data /app/resultados /app/resultados
+COPY deploy-data/robos_historicos_2019_2022_cuadriculas.geojson /app/resultados/delincuencia_exploratoria/
+RUN echo 'fab7a8a2de13f0718863caf28581e9a81e988f1834f7296129779b04df15e6a1  /app/resultados/delincuencia_exploratoria/robos_historicos_2019_2022_cuadriculas.geojson' | sha256sum -c - && python -c "from robos_historicos import leer_capa; assert len(leer_capa()['features']) == 25"
 ENV OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONUNBUFFERED=1
 EXPOSE 80
 CMD ["sh", "-c", "exec python -m uvicorn vercel_app:app --host 0.0.0.0 --port ${PORT:-80}"]

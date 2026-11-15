@@ -1,5 +1,7 @@
 # RutaInformada Quito
 
+Rama de despliegue: el servicio público incluye la cuadrícula histórica validada. Las instrucciones locales siguientes corresponden a la entrega original. Consulta el [despliegue y las condiciones de la fuente](VERCEL.md).
+
 [English](README.md) · **Español**
 
 Demo de STEMergent Hacks 2026 para comparar recorridos peatonales en una zona piloto de 19,13 km² del centro-norte de Quito. El recorrido de ejemplo permite comparar distancia, concentración histórica de siniestros, estimación vial LightGBM y concentración histórica de robos a personas. Para reproducir las cuatro modalidades desde GitHub, usa esta revisión de `main` y genera la capa opcional en tu equipo. El tag `hackathon-final-2026-11-14` conserva el arranque anterior.

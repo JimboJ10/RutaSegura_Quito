@@ -19,13 +19,13 @@ La rama `deploy/vercel` sirve React/Vite y FastAPI desde el mismo origen HTTPS. 
 
 El build extrae únicamente el grafo y las predicciones del ZIP público versionado y valida sus tamaños y SHA-256 contra el manifiesto del código. La imagen Linux usa Python 3.14, OSMnx, NetworkX y las dependencias geoespaciales binarias. LightGBM ya calculó los indicadores. Una instancia nueva debe cargar 14.686 nodos y 43.248 aristas antes de atender la primera solicitud.
 
-El piloto público ofrece tres modalidades. La cuarta comparación y los avisos de robos necesitan la capa histórica 2019–2022. La reproducción local está documentada en el [README](README.md). Servir el GeoJSON desde un endpoint público también lo redistribuiría. Su inclusión queda pendiente de acreditar esos derechos.
+Esta rama incluye en deploy-data únicamente la capa agregada de 25 polígonos de 2019–2022. La auditoría original concilió 1.102 registros con el control del rectángulo piloto. Los conteos de 1 a 4 aparecen como intervalo. El build verifica la huella de la copia validada y la carga con el lector de FastAPI. La cuarta tarjeta se ofrece sólo para alternativas distintas que cumplen los criterios históricos y de desvío. Los datos no describen el peligro actual.
 
 El manifest y el service worker conservan el alcance `/`. Una primera carga HTTPS prepara la interfaz y las calles vectoriales. Guarda el recorrido antes de desconectar el dispositivo. La PWA consulta IndexedDB al reabrirse en el mismo origen. Los recorridos nuevos requieren FastAPI y las teselas de OpenStreetMap se solicitan en línea.
 
 ## Verificación del dominio
 
-Comprueba `/api/health` y `/api/predicciones`, abre el ejemplo y compara los recorridos. Las distancias de referencia son 3,2557, 3,3464 y 3,2931 km. Para comprobar en Chromium el mapa, los guardados y la reapertura offline a 390 × 844 y 1280 × 800:
+Comprueba `/api/health` y `/api/predicciones`, abre el ejemplo y compara los recorridos. Las distancias de referencia son 3,2557, 3,3464, 3,2931 y 3,3318 km. Para comprobar en Chromium el mapa, los guardados y la reapertura offline a 390 × 844 y 1280 × 800:
 
 ```powershell
 cd frontend
@@ -36,3 +36,5 @@ node scripts/test-vercel.mjs https://DOMINIO-DE-PRODUCCION
 ```
 
 [Vercel Services y reglas de enrutamiento](https://vercel.com/kb/guide/vercel-services) · [Contenedores HTTP en Vercel](https://vercel.com/kb/guide/docker)
+
+La cuenta jquinteros_esriecdemos publica la [ficha ArcGIS](https://www.arcgis.com/home/item.html?id=f406a38db5f7465b9be1eadec882f769). Sus campos de licencia y créditos están vacíos. Esri describe permisos generales para contenido compartido, sujetos a restricciones del proveedor. La publicación del agregado por decisión del equipo no acredita la cadena de derechos del productor ni concede una licencia adicional a terceros. [Condiciones de ArcGIS Online](https://doc.esri.com/en/arcgis-online/latest/reference/terms-of-use.html)

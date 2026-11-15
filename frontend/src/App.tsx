@@ -125,6 +125,7 @@ export default function App() {
       <ul>{demo.config?.advertencias.map(text => <li key={text}>{text}</li>)}</ul>
       <p>Las rutas parten y terminan en nodos ajustados. La distancia al nodo no es un itinerario de acceso. El límite del 15 % se aplica entre esos nodos.</p>
       <HistoricalSafetyStats />
+      <p>Fuente de la capa agregada 2019–2022: <a href="https://www.arcgis.com/home/item.html?id=f406a38db5f7465b9be1eadec882f769">Robo_personas view</a>, publicada por la cuenta jquinteros_esriecdemos. La ficha no identifica al productor original.</p>
       <form method="dialog"><button className="primary full-width">Entendido, volver al mapa</button></form>
     </dialog>
   </div>;

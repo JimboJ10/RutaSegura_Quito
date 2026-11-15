@@ -1,0 +1,1090 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "celda-01",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.51144158247637,
+              -0.215
+            ],
+            [
+              -78.515,
+              -0.215
+            ],
+            [
+              -78.515,
+              -0.20789120340239223
+            ],
+            [
+              -78.51144271512392,
+              -0.207890639066526
+            ],
+            [
+              -78.51144158247637,
+              -0.215
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-01",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": null,
+        "rango_registros": "1-4",
+        "area_km2": 0.31167,
+        "densidad_registros_periodo_km2": null,
+        "nivel": "uno_a_cuatro_registros",
+        "color_sugerido": "#d6b2ad",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-02",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.51144271512392,
+              -0.207890639066526
+            ],
+            [
+              -78.515,
+              -0.20789120340239223
+            ],
+            [
+              -78.515,
+              -0.19885245603301543
+            ],
+            [
+              -78.51144410016437,
+              -0.198851916443412
+            ],
+            [
+              -78.51144271512392,
+              -0.207890639066526
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-02",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": null,
+        "rango_registros": "1-4",
+        "area_km2": 0.39613,
+        "densidad_registros_periodo_km2": null,
+        "nivel": "uno_a_cuatro_registros",
+        "color_sugerido": "#d6b2ad",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-03",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.51144410016437,
+              -0.198851916443412
+            ],
+            [
+              -78.515,
+              -0.19885245603301543
+            ],
+            [
+              -78.515,
+              -0.18981370858302654
+            ],
+            [
+              -78.51144542364626,
+              -0.189813193711691
+            ],
+            [
+              -78.51144410016437,
+              -0.198851916443412
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-03",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": null,
+        "rango_registros": "1-4",
+        "area_km2": 0.39598,
+        "densidad_registros_periodo_km2": null,
+        "nivel": "uno_a_cuatro_registros",
+        "color_sugerido": "#d6b2ad",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-04",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.51144542364626,
+              -0.189813193711691
+            ],
+            [
+              -78.515,
+              -0.18981370858302654
+            ],
+            [
+              -78.515,
+              -0.18077496105608856
+            ],
+            [
+              -78.51144668556978,
+              -0.180774470876299
+            ],
+            [
+              -78.51144542364626,
+              -0.189813193711691
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-04",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": null,
+        "rango_registros": "1-4",
+        "area_km2": 0.39584,
+        "densidad_registros_periodo_km2": null,
+        "nivel": "uno_a_cuatro_registros",
+        "color_sugerido": "#d6b2ad",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-05",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.515,
+              -0.18077496105608856
+            ],
+            [
+              -78.515,
+              -0.173
+            ],
+            [
+              -78.51144772174172,
+              -0.173000003157935
+            ],
+            [
+              -78.51144668556978,
+              -0.180774470876299
+            ],
+            [
+              -78.515,
+              -0.18077496105608856
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-05",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 0,
+        "rango_registros": null,
+        "area_km2": 0.34037,
+        "densidad_registros_periodo_km2": null,
+        "nivel": "sin_registros_en_esta_fuente",
+        "color_sugerido": "#bec7c9",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-06",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.50246447212533,
+              -0.207889211149639
+            ],
+            [
+              -78.50246333516162,
+              -0.215
+            ],
+            [
+              -78.51144158247637,
+              -0.215
+            ],
+            [
+              -78.51144271512392,
+              -0.207890639066526
+            ],
+            [
+              -78.50246447212533,
+              -0.207889211149639
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-06",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 33,
+        "rango_registros": null,
+        "area_km2": 0.78663,
+        "densidad_registros_periodo_km2": 41.951,
+        "nivel": "menor_concentracion_historica_relativa",
+        "color_sugerido": "#f1c5a2",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-07",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.51144410016437,
+              -0.198851916443412
+            ],
+            [
+              -78.5024658621501,
+              -0.198850550610352
+            ],
+            [
+              -78.50246447212533,
+              -0.207889211149639
+            ],
+            [
+              -78.51144271512392,
+              -0.207890639066526
+            ],
+            [
+              -78.51144410016437,
+              -0.198851916443412
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-07",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 37,
+        "rango_registros": null,
+        "area_km2": 1.0,
+        "densidad_registros_periodo_km2": 37.0,
+        "nivel": "menor_concentracion_historica_relativa",
+        "color_sugerido": "#f1c5a2",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-08",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.51144542364626,
+              -0.189813193711691
+            ],
+            [
+              -78.50246719039478,
+              -0.189811889962393
+            ],
+            [
+              -78.5024658621501,
+              -0.198850550610352
+            ],
+            [
+              -78.51144410016437,
+              -0.198851916443412
+            ],
+            [
+              -78.51144542364626,
+              -0.189813193711691
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-08",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 12,
+        "rango_registros": null,
+        "area_km2": 1.0,
+        "densidad_registros_periodo_km2": 12.0,
+        "nivel": "menor_concentracion_historica_relativa",
+        "color_sugerido": "#f1c5a2",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-09",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.51144668556978,
+              -0.180774470876299
+            ],
+            [
+              -78.50246845685956,
+              -0.180773229210701
+            ],
+            [
+              -78.50246719039478,
+              -0.189811889962393
+            ],
+            [
+              -78.51144542364626,
+              -0.189813193711691
+            ],
+            [
+              -78.51144668556978,
+              -0.180774470876299
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-09",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 17,
+        "rango_registros": null,
+        "area_km2": 1.0,
+        "densidad_registros_periodo_km2": 17.0,
+        "nivel": "menor_concentracion_historica_relativa",
+        "color_sugerido": "#f1c5a2",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-10",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.51144668556978,
+              -0.180774470876299
+            ],
+            [
+              -78.51144772174172,
+              -0.173000003157935
+            ],
+            [
+              -78.50246949660425,
+              -0.173000008149375
+            ],
+            [
+              -78.50246845685956,
+              -0.180773229210701
+            ],
+            [
+              -78.51144668556978,
+              -0.180774470876299
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-10",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 0,
+        "rango_registros": null,
+        "area_km2": 0.86006,
+        "densidad_registros_periodo_km2": null,
+        "nivel": "sin_registros_en_esta_fuente",
+        "color_sugerido": "#bec7c9",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-11",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.49348629090699,
+              -0.207887778103449
+            ],
+            [
+              -78.49348514962469,
+              -0.215
+            ],
+            [
+              -78.50246333516162,
+              -0.215
+            ],
+            [
+              -78.50246447212533,
+              -0.207889211149639
+            ],
+            [
+              -78.49348629090699,
+              -0.207887778103449
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-11",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 58,
+        "rango_registros": null,
+        "area_km2": 0.78679,
+        "densidad_registros_periodo_km2": 73.717,
+        "nivel": "concentracion_historica_intermedia",
+        "color_sugerido": "#e27d57",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-12",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.5024658621501,
+              -0.198850550610352
+            ],
+            [
+              -78.49348768591591,
+              -0.198849179871005
+            ],
+            [
+              -78.49348629090699,
+              -0.207887778103449
+            ],
+            [
+              -78.50246447212533,
+              -0.207889211149639
+            ],
+            [
+              -78.5024658621501,
+              -0.198850550610352
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-12",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 128,
+        "rango_registros": null,
+        "area_km2": 1.0,
+        "densidad_registros_periodo_km2": 128.0,
+        "nivel": "mayor_concentracion_historica_relativa",
+        "color_sugerido": "#bb2d28",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-13",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.50246719039478,
+              -0.189811889962393
+            ],
+            [
+              -78.49348901892321,
+              -0.189810581529823
+            ],
+            [
+              -78.49348768591591,
+              -0.198849179871005
+            ],
+            [
+              -78.5024658621501,
+              -0.198850550610352
+            ],
+            [
+              -78.50246719039478,
+              -0.189811889962393
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-13",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 58,
+        "rango_registros": null,
+        "area_km2": 1.0,
+        "densidad_registros_periodo_km2": 58.0,
+        "nivel": "concentracion_historica_intermedia",
+        "color_sugerido": "#e27d57",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-14",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.50246845685956,
+              -0.180773229210701
+            ],
+            [
+              -78.4934902899291,
+              -0.180771983084846
+            ],
+            [
+              -78.49348901892321,
+              -0.189810581529823
+            ],
+            [
+              -78.50246719039478,
+              -0.189811889962393
+            ],
+            [
+              -78.50246845685956,
+              -0.180773229210701
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-14",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 32,
+        "rango_registros": null,
+        "area_km2": 1.0,
+        "densidad_registros_periodo_km2": 32.0,
+        "nivel": "menor_concentracion_historica_relativa",
+        "color_sugerido": "#f1c5a2",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-15",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.50246845685956,
+              -0.180773229210701
+            ],
+            [
+              -78.50246949660425,
+              -0.173000008149375
+            ],
+            [
+              -78.49349133324529,
+              -0.173000008855926
+            ],
+            [
+              -78.4934902899291,
+              -0.180771983084846
+            ],
+            [
+              -78.50246845685956,
+              -0.180773229210701
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-15",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 17,
+        "rango_registros": null,
+        "area_km2": 0.85993,
+        "densidad_registros_periodo_km2": 19.769,
+        "nivel": "menor_concentracion_historica_relativa",
+        "color_sugerido": "#f1c5a2",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-16",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.48450817169041,
+              -0.207886339928134
+            ],
+            [
+              -78.48450702608709,
+              -0.215
+            ],
+            [
+              -78.49348514962469,
+              -0.215
+            ],
+            [
+              -78.49348629090699,
+              -0.207887778103449
+            ],
+            [
+              -78.48450817169041,
+              -0.207886339928134
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-16",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 34,
+        "rango_registros": null,
+        "area_km2": 0.78695,
+        "densidad_registros_periodo_km2": 43.205,
+        "nivel": "menor_concentracion_historica_relativa",
+        "color_sugerido": "#f1c5a2",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-17",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.49348768591591,
+              -0.198849179871005
+            ],
+            [
+              -78.4845095716833,
+              -0.198847804225538
+            ],
+            [
+              -78.48450817169041,
+              -0.207886339928134
+            ],
+            [
+              -78.49348629090699,
+              -0.207887778103449
+            ],
+            [
+              -78.49348768591591,
+              -0.198849179871005
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-17",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 188,
+        "rango_registros": null,
+        "area_km2": 1.0,
+        "densidad_registros_periodo_km2": 188.0,
+        "nivel": "mayor_concentracion_historica_relativa",
+        "color_sugerido": "#bb2d28",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-18",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.49348901892321,
+              -0.189810581529823
+            ],
+            [
+              -78.48451090945308,
+              -0.18980926841414
+            ],
+            [
+              -78.4845095716833,
+              -0.198847804225538
+            ],
+            [
+              -78.49348768591591,
+              -0.198849179871005
+            ],
+            [
+              -78.49348901892321,
+              -0.189810581529823
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-18",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 68,
+        "rango_registros": null,
+        "area_km2": 1.0,
+        "densidad_registros_periodo_km2": 68.0,
+        "nivel": "concentracion_historica_intermedia",
+        "color_sugerido": "#e27d57",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-19",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.4934902899291,
+              -0.180771983084846
+            ],
+            [
+              -78.48451218499991,
+              -0.180770732498885
+            ],
+            [
+              -78.48451090945308,
+              -0.18980926841414
+            ],
+            [
+              -78.49348901892321,
+              -0.189810581529823
+            ],
+            [
+              -78.4934902899291,
+              -0.180771983084846
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-19",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 49,
+        "rango_registros": null,
+        "area_km2": 1.0,
+        "densidad_registros_periodo_km2": 49.0,
+        "nivel": "concentracion_historica_intermedia",
+        "color_sugerido": "#e27d57",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-20",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.4934902899291,
+              -0.180771983084846
+            ],
+            [
+              -78.49349133324529,
+              -0.173000008855926
+            ],
+            [
+              -78.48451323188635,
+              -0.173000005277665
+            ],
+            [
+              -78.48451218499991,
+              -0.180770732498885
+            ],
+            [
+              -78.4934902899291,
+              -0.180771983084846
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-20",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 91,
+        "rango_registros": null,
+        "area_km2": 0.8598,
+        "densidad_registros_periodo_km2": 105.839,
+        "nivel": "mayor_concentracion_historica_relativa",
+        "color_sugerido": "#bb2d28",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-21",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.47800009476296,
+              -0.207885294208028
+            ],
+            [
+              -78.478,
+              -0.215
+            ],
+            [
+              -78.48450702608709,
+              -0.215
+            ],
+            [
+              -78.48450817169041,
+              -0.207886339928134
+            ],
+            [
+              -78.47800009476296,
+              -0.207885294208028
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-21",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 18,
+        "rango_registros": null,
+        "area_km2": 0.57051,
+        "densidad_registros_periodo_km2": 31.551,
+        "nivel": "menor_concentracion_historica_relativa",
+        "color_sugerido": "#f1c5a2",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-22",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.4845095716833,
+              -0.198847804225538
+            ],
+            [
+              -78.47800015940591,
+              -0.198846803765821
+            ],
+            [
+              -78.47800009476296,
+              -0.207885294208028
+            ],
+            [
+              -78.48450817169041,
+              -0.207886339928134
+            ],
+            [
+              -78.4845095716833,
+              -0.198847804225538
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-22",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 35,
+        "rango_registros": null,
+        "area_km2": 0.72496,
+        "densidad_registros_periodo_km2": 48.278,
+        "nivel": "menor_concentracion_historica_relativa",
+        "color_sugerido": "#f1c5a2",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-23",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.48451090945308,
+              -0.18980926841414
+            ],
+            [
+              -78.47800016166661,
+              -0.189808313233497
+            ],
+            [
+              -78.47800015940591,
+              -0.198846803765821
+            ],
+            [
+              -78.4845095716833,
+              -0.198847804225538
+            ],
+            [
+              -78.48451090945308,
+              -0.18980926841414
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-23",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 46,
+        "rango_registros": null,
+        "area_km2": 0.72511,
+        "densidad_registros_periodo_km2": 63.439,
+        "nivel": "concentracion_historica_intermedia",
+        "color_sugerido": "#e27d57",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-24",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.48451218499991,
+              -0.180770732498885
+            ],
+            [
+              -78.47800010154512,
+              -0.180769822616004
+            ],
+            [
+              -78.47800016166661,
+              -0.189808313233497
+            ],
+            [
+              -78.48451090945308,
+              -0.18980926841414
+            ],
+            [
+              -78.48451218499991,
+              -0.180770732498885
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-24",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 97,
+        "rango_registros": null,
+        "area_km2": 0.72526,
+        "densidad_registros_periodo_km2": 133.745,
+        "nivel": "mayor_concentracion_historica_relativa",
+        "color_sugerido": "#bb2d28",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "celda-25",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.48451323188635,
+              -0.173000005277665
+            ],
+            [
+              -78.478,
+              -0.173
+            ],
+            [
+              -78.47800010154512,
+              -0.180769822616004
+            ],
+            [
+              -78.48451218499991,
+              -0.180770732498885
+            ],
+            [
+              -78.48451323188635,
+              -0.173000005277665
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "celda_id": "celda-25",
+        "periodo": "2019-2022",
+        "tipo": "robo_a_personas",
+        "numero_registros": 77,
+        "rango_registros": null,
+        "area_km2": 0.62361,
+        "densidad_registros_periodo_km2": 123.474,
+        "nivel": "mayor_concentracion_historica_relativa",
+        "color_sugerido": "#bb2d28",
+        "advertencia": "Datos históricos 2019-2022; NO alertas de delito actual ni riesgo individual."
+      }
+    }
+  ],
+  "metadata": {
+    "proyecto": "RutaInformada Quito",
+    "periodo": "2019-2022",
+    "fuente": "https://services1.arcgis.com/UOl0yzPDLol8nS3m/ArcGIS/rest/services/Robo_personas_view/FeatureServer/0",
+    "version_procesador": "1.0.0",
+    "uso": "ANALISIS LOCAL; redistribucion y calidad geoespacial no verificadas",
+    "metodologia": "Conteos ArcGIS de robos a personas por interseccion espacial con las cuadrículas de la demo recortadas a la BBOX",
+    "privacidad": "No se descargaron puntos individuales; los conteos de 1-4 se ocultan",
+    "alerta": "El color refleja concentraciones de registros antiguos, no probabilidades actuales ni calles peligrosas"
+  }
+}
